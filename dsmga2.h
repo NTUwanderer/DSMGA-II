@@ -18,6 +18,7 @@
 class DSMGA2 {
 public:
     DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff);
+    DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff, unordered_map<unsigned long, double> *p);
 
     ~DSMGA2 ();
 
@@ -57,7 +58,7 @@ public:
     int ell;                                  // chromosome length
     int nCurrent;                             // population size
     bool EQ;
-    unordered_map<unsigned long, double> pHash; // to check if a chromosome is in the population
+    unordered_map<unsigned long, double>* pHash; // to check if a chromosome is in the population
 
 
     list<int> *masks;

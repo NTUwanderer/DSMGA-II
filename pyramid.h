@@ -18,7 +18,11 @@ class Pyramid{
             layers.push_back(init);
 		} 
 
-        bool add_unique(const Chromosome& chromo, double score);
+        // return true if successfully added
+        bool add_unique(const Chromosome&, double);
+
+        
+        
         
 
 	private:
