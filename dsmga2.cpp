@@ -170,7 +170,32 @@ void DSMGA2::oneRun (bool output) {
     ++generation;
 }
 
+void DSMGA2::pyramid_oneRun (bool output) {
 
+    if (CACHE)
+        Chromosome::cache.clear();
+
+    pyramid_mixing();
+
+
+    double max = -INF;
+    stFitness.reset ();
+
+    for (int i = 0; i < nCurrent; ++i) {
+        double fitness = population[i].getFitness();
+        if (fitness > max) {
+            max = fitness;
+            bestIndex = i;
+        }
+        stFitness.record (fitness);
+
+    }
+
+    if (output)
+        showStatistics ();
+
+    ++generation;
+}
 bool DSMGA2::shouldTerminate () {
     bool
     termination = false;
@@ -494,6 +519,27 @@ void DSMGA2::mixing() {
     }
 
 
+}
+
+void DSMGA2::pyramid_mixing() {
+
+    if (SELECTION)
+        selection();
+
+    for (int i=0; i<ell; ++i)
+        findClique(i, masks[i]);
+
+    int repeat = (ell>50)? ell/50: 1;
+
+    for (int k=0; k<repeat; ++k) {
+
+        genOrderN();
+        for (int i=0; i<nCurrent; ++i) {
+            restrictedMixing(population[orderN[i]]);
+            if (Chromosome::hit) break;
+        }
+        if (Chromosome::hit) break;
+    }
 }
 
 inline bool DSMGA2::isInP(const Chromosome& ch) const {

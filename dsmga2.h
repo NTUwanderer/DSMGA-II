@@ -27,10 +27,12 @@ public:
     void tournamentSelection();
 
     void oneRun (bool output = true);
+    void pyramid_oneRun (bool output = true);
     int doIt (bool output = true);
 
     void buildGraph ();
     void mixing ();
+    void pyramid_mixing();
     void restrictedMixing(Chromosome&);
     bool restrictedMixing(Chromosome& ch, list<int>& mask);
     void backMixing(Chromosome& source, list<int>& mask, Chromosome& des);

@@ -7,6 +7,7 @@
  */
 #include <vector>
 #include <map>
+#include <assert>
 
 #include "dsmga2.h"
 
@@ -21,7 +22,17 @@ class Pyramid{
         // return true if successfully added
         bool add_unique(const Chromosome&, double);
 
-        
+        void doOneLayer(int numOfLayer, bool output) {
+        	assert(numOfLayer < layers.size());
+        	//* really learn model
+        	DSMGA2 layer = layers[numOfLayer];
+
+    		layer.buildFastCounting();
+    		layer.buildGraph();
+        	while (!layer.shouldTerminate()) {
+        		pyramid_oneRun(output);
+        	}
+        }
         
         
 

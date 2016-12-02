@@ -16,11 +16,15 @@ Chromosome::Chromosome () {
     lengthLong = 0;
     gene = NULL;
     evaluated = false;
+
+    uplink = 0;
 }
 
 Chromosome::Chromosome (int n_length) {
     gene = NULL;
     init (n_length);
+
+    uplink = 0;
 }
 
 
@@ -405,3 +409,12 @@ double Chromosome::satFitness() const {
     delete []x;
     return result;
 }
+
+Chromosome* Chromosome::getUplink() const {
+    return uplink;
+}
+
+void Chromosome::setUplink(Chromosome* link) {
+    uplink = link;
+}
+

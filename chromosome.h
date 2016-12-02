@@ -120,6 +120,8 @@ public:
 
     double getMaxFitness () const;
 
+    Chromosome* getUplink() const;
+    void setUplink(Chromesome* link);
 
 public:
     static int nfe;
@@ -137,6 +139,7 @@ protected:
     bool evaluated;
     unsigned long key;
 
+    Chromosome* uplink;
 };
 
 
