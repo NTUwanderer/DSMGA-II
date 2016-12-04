@@ -13,10 +13,8 @@
 
 class Pyramid {
 public:
-    Pyramid (int ell, int fffff) {   
-        DSMGA2 init(ell, ell << 1 , 1, ell * ell / 3, fffff, &pHash);
-        
-        layers.push_back(init);
+    Pyramid (int _ell, int _fffff): ell(_ell), fffff(_fffff) {   
+        add_one_layer();
     } 
 
     // return true if successfully added
@@ -27,8 +25,11 @@ public:
 private:
     vector<DSMGA2> layers;
     unordered_map<unsigned long, double> pHash;
+
     int ell;
-        
+    int fffff;
+
+    void add_one_layer();
 };
 
 #endif

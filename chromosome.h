@@ -140,7 +140,7 @@ protected:
     bool evaluated;
     unsigned long key;
 
-    Chromosome* uplink;
+    Chromosome* uplink = 0;
 };
 
 
