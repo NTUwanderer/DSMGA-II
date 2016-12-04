@@ -28,6 +28,7 @@ public:
 
     void oneRun (bool output = true);
     void pyramid_oneRun (bool output = true);
+    void refreshStats (bool output);
     int doIt (bool output = true);
 
     void buildGraph ();
@@ -54,6 +55,9 @@ public:
 
     bool isSteadyState ();
 
+    void setNextLayer(DSMGA2* layer);
+    bool add_unique(Chromosome& chromosome);
+
 //protected:
 public:
 
@@ -61,7 +65,6 @@ public:
     int nCurrent;                             // population size
     bool EQ;
     unordered_map<unsigned long, double>* pHash; // to check if a chromosome is in the population
-
 
     list<int> *masks;
     int *selectionIndex;
@@ -82,6 +85,8 @@ public:
     double previousFitnessMean;
     Statistics stFitness;
 
+    DSMGA2* nextLayer = 0;
+
     // methods
     double computeMI(double, double, double, double) const;
 
@@ -94,8 +99,6 @@ public:
 
     size_t findSize(Chromosome&, list<int>&) const;
     size_t findSize(Chromosome&, list<int>&, Chromosome&) const;
-
-
 };
 
 

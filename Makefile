@@ -69,6 +69,7 @@ myrand.o: myrand.h mt19937ar.h
 spin.o: global.h myrand.h mt19937ar.h bitwisedistance.h spin.h
 spin.o: nk-wa.h doublelinkedlistarray.h zkey.h sat.h
 nk-wa.o: nk-wa.h
+pyramid.o: pyramid.h
 sat.o: sat.h
 chromosome.o: spin.h chromosome.h global.h myrand.h mt19937ar.h
 chromosome.o: bitwisedistance.h nk-wa.h doublelinkedlistarray.h zkey.h sat.h

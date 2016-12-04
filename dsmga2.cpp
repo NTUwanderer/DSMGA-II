@@ -105,6 +105,8 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
         for (int i=0; i < nCurrent; i++)
             population[i].GHC();
     }
+
+    nextLayer = 0;
 }
 
 DSMGA2::~DSMGA2 () {
@@ -177,7 +179,10 @@ void DSMGA2::pyramid_oneRun (bool output) {
 
     pyramid_mixing();
 
+    ++generation;
+}
 
+void DSMGA2::refreshStats (bool output) {
     double max = -INF;
     stFitness.reset ();
 
@@ -193,9 +198,8 @@ void DSMGA2::pyramid_oneRun (bool output) {
 
     if (output)
         showStatistics ();
-
-    ++generation;
 }
+
 bool DSMGA2::shouldTerminate () {
     bool
     termination = false;
@@ -413,25 +417,25 @@ bool DSMGA2::restrictedMixing(Chromosome& ch, list<int>& mask) {
         ////////
 
         if (trial.getFitness() >= ch.getFitness()) {
-        /////////
-        #ifdef DEBUG
-        cout << "RM Fitness improve: " << trial.getFitness() - ch.getFitness();
-        vector<int>::iterator it = takenMask.begin();
-        cout << " Taken Mask: [" << *it;
-        it++;
-        for(; it!= takenMask.end(); it++)
-            cout << "-" << *it;
-        cout << "]" << endl;
-        cout << setw(5) << ch.getFitness() << "before : ";
-        for(int i = 0; i < ch.getLength(); i++)
-            cout << ch.getVal(i);
-        cout << endl;
-        cout << setw(5) << trial.getFitness() << "after  : ";
-        for(int i = 0; i < trial.getLength(); i++)
-            cout << trial.getVal(i);
-        cout << endl << endl;
-        #endif
-        /////////
+            /////////
+            #ifdef DEBUG
+            cout << "RM Fitness improve: " << trial.getFitness() - ch.getFitness();
+            vector<int>::iterator it = takenMask.begin();
+            cout << " Taken Mask: [" << *it;
+            it++;
+            for(; it!= takenMask.end(); it++)
+                cout << "-" << *it;
+            cout << "]" << endl;
+            cout << setw(5) << ch.getFitness() << "before : ";
+            for(int i = 0; i < ch.getLength(); i++)
+                cout << ch.getVal(i);
+            cout << endl;
+            cout << setw(5) << trial.getFitness() << "after  : ";
+            for(int i = 0; i < trial.getLength(); i++)
+                cout << trial.getVal(i);
+            cout << endl << endl;
+            #endif
+            /////////
             (*pHash).erase(ch.getKey());
             (*pHash)[trial.getKey()] = trial.getFitness();
 
@@ -700,4 +704,18 @@ void DSMGA2::tournamentSelection () {
         }
         selectionIndex[i] = winner;
     }
+}
+
+void DSMGA2::setNextLayer(DSMGA2* layer) {
+    nextLayer = layer;
+}
+
+bool DSMGA2::add_unique(Chromosome& chromosome) {
+    ++nCurrent;
+    // population size...?
+
+    double f = chromosome.getFitness();
+    (*pHash)[chromosome.getKey()] = f;
+
+    return true;
 }
