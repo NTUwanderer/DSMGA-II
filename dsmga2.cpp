@@ -122,6 +122,7 @@ DSMGA2::~DSMGA2 () {
 
 
 
+
 bool DSMGA2::isSteadyState () {
 
     if (stFitness.getNumber () <= 0)
@@ -329,6 +330,92 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
 
 }
 
+bool DSMGA2::pyramid_BM(Chromosome& source, list<int>& mask, Chromosome& des)
+{   double diff = 0;
+    int cover = -1; // 0 means covering the lower one. 1 for the upper one, -1 for not covering
+    Chromosome trial(ell), trialUp(ell);
+    trial = des;
+    for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
+        trial.setVal(*it, source.getVal(*it));
+
+    diff = trial.getFitness() - des.getFitness();
+    if (diff > 0) {
+        cover = 0;
+    }
+
+    if (des.getUplink())
+    {   trialUp = (*des.getUplink());
+        
+        for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
+            trialUp.setVal(*it, source.getVal(*it));
+
+        if (trialUp.getFitness() - des.getFitness() > diff) {
+            cover = 1;
+        }
+    }
+
+    if (cover == 0) 
+    {   (*pHash).erase(des.getKey());
+        (*pHash)[trial.getKey()] = trial.getFitness();
+        des = trial;
+    }
+    else if (cover == 1)
+    {   Chromosome* upLink = des.getUplink();
+        (*pHash).erase(upLink->getKey());
+        (*pHash)[trialUp.getKey()] = trialUp.getFitness();
+        (*upLink) = trialUp;
+    }
+    
+    return (cover != -1);
+}
+
+bool DSMGA2::pyramid_BM_Equal(Chromosome& source, list<int>& mask, Chromosome& des)
+{   double diff = 0;
+    int cover = -1; // 0 means covering the lower one. 1 for the upper one, -1 for not covering
+    Chromosome trial(ell), trialUp(ell);
+    trial = des;
+    for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
+        trial.setVal(*it, source.getVal(*it));
+
+    if (trial.getFitness() > des.getFitness())  
+    {   cover = 0;
+        EQ = false;
+    }
+    
+    if (EQ && trial.getFitness() >= des.getFitness()) cover = 0; // Behaviour consistent
+
+    if (des.getUplink())
+    {   trialUp = (*des.getUplink());
+        
+        for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
+            trialUp.setVal(*it, source.getVal(*it));
+
+        if (trialUp.getFitness() - des.getFitness() > diff) {
+            cover = 1;
+            EQ = false;
+        }
+        else if (cover == -1 && trialUp.getFitness() > des.getFitness() )
+        {   cover = 1;
+            EQ = false;
+        }
+        else if (cover == -1 && trialUp.getFitness() >= des.getFitness() ) cover = 1;
+    }
+
+    if (cover == 0) 
+    {   (*pHash).erase(des.getKey());
+        (*pHash)[trial.getKey()] = trial.getFitness();
+        des = trial;
+    }
+    else if (cover == 1)
+    {   Chromosome* upLink = des.getUplink();
+        (*pHash).erase(upLink->getKey());
+        (*pHash)[trialUp.getKey()] = trialUp.getFitness();
+        (*upLink) = trialUp;
+    }
+    
+    return (cover != -1);
+}
+
 void DSMGA2::pyramid_restrictedMixing(Chromosome& ch) {
 
     int r = myRand.uniformInt(0, ell-1);
@@ -354,9 +441,9 @@ void DSMGA2::pyramid_restrictedMixing(Chromosome& ch) {
         for (int i=0; i<nCurrent; ++i) {
             // TODO: replace with pyramid_BM
             if (EQ)
-                backMixingE(ch, mask, population[orderN[i]]);
+                pyramid_BM_Equal(ch, mask, population[orderN[i]]);
             else
-                backMixing(ch, mask, population[orderN[i]]);
+                pyramid_BM(ch, mask, population[orderN[i]]);
         }
     }
 

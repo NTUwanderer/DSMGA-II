@@ -43,6 +43,8 @@ public:
 
     void backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
     void backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);
+    bool pyramid_BM(Chromosome& source, list<int>& mask, Chromosome& des);
+    bool pyramid_BM_Equal(Chromosome& source, list<int>& mask, Chromosome& des);
 
     bool shouldTerminate ();
 
