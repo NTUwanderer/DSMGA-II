@@ -42,7 +42,8 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     selectionIndex = new int[nCurrent];
     orderN = new int[nCurrent];
     orderELL = new int[ell];
-    population = new Chromosome[nCurrent];
+    // population = new Chromosome[nCurrent];
+    population.resize(nCurrent);
     fastCounting = new FastCounting[ell];
 
     for (int i = 0; i < ell; i++)
@@ -86,7 +87,8 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
     selectionIndex = new int[nCurrent];
     orderN = new int[nCurrent];
     orderELL = new int[ell];
-    population = new Chromosome[nCurrent];
+    // population = new Chromosome[nCurrent];
+    population.resize(nCurrent);
     fastCounting = new FastCounting[ell];
 
     for (int i = 0; i < ell; i++)
@@ -114,7 +116,7 @@ DSMGA2::~DSMGA2 () {
     delete []orderN;
     delete []orderELL;
     delete []selectionIndex;
-    delete []population;
+    // delete []population;
     delete []fastCounting;
 }
 
@@ -327,6 +329,39 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
 
 }
 
+void DSMGA2::pyramid_restrictedMixing(Chromosome& ch) {
+
+    int r = myRand.uniformInt(0, ell-1);
+
+    list<int> mask = masks[r];
+
+    size_t size = findSize(ch, mask);
+    if (size > (size_t)ell/2)
+        size = ell/2;
+
+    // prune mask to exactly size
+    while (mask.size() > size)
+        mask.pop_back();
+
+
+    bool taken = pyramid_restrictedMixing(ch, mask);
+
+    EQ = true;
+    if (taken) {
+
+        genOrderN();
+
+        for (int i=0; i<nCurrent; ++i) {
+            // TODO: replace with pyramid_BM
+            if (EQ)
+                backMixingE(ch, mask, population[orderN[i]]);
+            else
+                backMixing(ch, mask, population[orderN[i]]);
+        }
+    }
+
+}
+
 void DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
 
     Chromosome trial(ell);
@@ -458,6 +493,113 @@ bool DSMGA2::restrictedMixing(Chromosome& ch, list<int>& mask) {
 
 }
 
+bool DSMGA2::pyramid_restrictedMixing(Chromosome& ch, list<int>& mask) {
+
+    bool taken = false;
+    size_t lastUB = 0;
+
+    for (size_t ub = 1; ub <= mask.size(); ++ub) {
+
+        size_t size = 1;
+        Chromosome trial(ell);
+        trial = ch;
+
+        //2016-10-19
+        vector<int> takenMask;
+
+        for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it) {
+
+            //2016-10-19
+            takenMask.push_back(*it);
+
+            trial.flip(*it);
+
+            ++size;
+            if (size > ub) break;
+        }
+
+        //if (isInP(trial)) continue;
+        if (isInP(trial)) break;
+
+        /////////
+        #ifdef DEBUG
+        vector<int>::iterator it = takenMask.begin();
+        cout << " Taken Mask: [" << *it;
+        it++;
+        for(; it!= takenMask.end(); it++)
+            cout << "-" << *it;
+        cout << "]" << endl;
+        cout << setw(5) << ch.getFitness() << "before : ";
+        for(int i = 0; i < ch.getLength(); i++)
+            cout << ch.getVal(i);
+        cout << endl;
+        cout << setw(5) << trial.getFitness() << "after  : ";
+        for(int i = 0; i < trial.getLength(); i++)
+            cout << trial.getVal(i);
+        cout << endl << endl;
+        #endif
+        ////////
+
+        if (trial.getFitness() >= ch.getFitness()) {
+            /////////
+            #ifdef DEBUG
+            cout << "RM Fitness improve: " << trial.getFitness() - ch.getFitness();
+            vector<int>::iterator it = takenMask.begin();
+            cout << " Taken Mask: [" << *it;
+            it++;
+            for(; it!= takenMask.end(); it++)
+                cout << "-" << *it;
+            cout << "]" << endl;
+            cout << setw(5) << ch.getFitness() << "before : ";
+            for(int i = 0; i < ch.getLength(); i++)
+                cout << ch.getVal(i);
+            cout << endl;
+            cout << setw(5) << trial.getFitness() << "after  : ";
+            for(int i = 0; i < trial.getLength(); i++)
+                cout << trial.getVal(i);
+            cout << endl << endl;
+            #endif
+            /////////
+
+            if (ch.getUplink() == 0 && nextLayer != 0) {
+                ch.setUplink(&trial);
+                nextLayer->add_unique(trial);
+            } else {
+                Chromosome newTrial = *(ch.getUplink());
+
+                int newSize = 1;
+                for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it) {
+                    newTrial.flip(*it);
+
+                    ++newSize;
+                    if (newSize > ub) break;
+                }
+
+                if (newTrial.getFitness() >= ch.getUplink()->getFitness()) {
+                    nextLayer->pHash->erase(ch.getUplink()->getKey());
+                    (*(nextLayer->pHash))[newTrial.getKey()] = newTrial.getFitness();
+
+                    *(ch.getUplink()) = newTrial; // should be saved in nextLayer...?
+                }
+            }
+            taken = true; // other conditions?
+        }
+
+        if (taken) {
+            lastUB = ub;
+            break;
+        }
+    }
+
+    if (lastUB != 0) {
+        while (mask.size() > lastUB)
+            mask.pop_back();
+    }
+
+    return taken;
+
+}
+
 size_t DSMGA2::findSize(Chromosome& ch, list<int>& mask) const {
 
     DLLA candidate(nCurrent);
@@ -539,7 +681,7 @@ void DSMGA2::pyramid_mixing() {
 
         genOrderN();
         for (int i=0; i<nCurrent; ++i) {
-            restrictedMixing(population[orderN[i]]);
+            pyramid_restrictedMixing(population[orderN[i]]);
             if (Chromosome::hit) break;
         }
         if (Chromosome::hit) break;
@@ -711,8 +853,12 @@ void DSMGA2::setNextLayer(DSMGA2* layer) {
 }
 
 bool DSMGA2::add_unique(Chromosome& chromosome) {
+    if (isInP(chromosome))
+        return false;
+
     ++nCurrent;
-    // population size...?
+    population.push_back(chromosome);
+    chromosome = population.back();
 
     double f = chromosome.getFitness();
     (*pHash)[chromosome.getKey()] = f;

@@ -34,8 +34,13 @@ public:
     void buildGraph ();
     void mixing ();
     void pyramid_mixing();
+
     void restrictedMixing(Chromosome&);
     bool restrictedMixing(Chromosome& ch, list<int>& mask);
+
+    void pyramid_restrictedMixing(Chromosome&);
+    bool pyramid_restrictedMixing(Chromosome& ch, list<int>& mask);
+
     void backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
     void backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);
 
@@ -77,7 +82,7 @@ public:
     int generation;
     int bestIndex;
 
-    Chromosome* population;
+    vector<Chromosome> population;
     FastCounting* fastCounting;
 
     TriMatrix<double> graph;
