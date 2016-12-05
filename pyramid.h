@@ -17,17 +17,21 @@ public:
         add_one_layer();
     } 
 
-    // return true if successfully added
-    bool add_unique (Chromosome&, size_t);
-
-    void doOneLayer (int, bool);
-
+    void doIt (bool);
+    void printStatus const ();
 private:
     vector<DSMGA2> layers;
     unordered_map<unsigned long, double> pHash;
 
     int ell;
     int fffff;
+
+    bool shouldTerminate();
+
+    // return true if successfully added
+    bool add_unique (Chromosome&, size_t);
+
+    bool doOneLayer (int, bool);
 
     void add_one_layer();
 };

@@ -175,14 +175,14 @@ void DSMGA2::oneRun (bool output) {
     ++generation;
 }
 
-void DSMGA2::pyramid_oneRun (bool output) {
+bool DSMGA2::pyramid_oneRun (bool output) {
 
     if (CACHE)
         Chromosome::cache.clear();
 
-    pyramid_mixing();
+    return pyramid_mixing();
 
-    ++generation;
+    // ++generation;
 }
 
 void DSMGA2::refreshStats (bool output) {
@@ -358,7 +358,13 @@ bool DSMGA2::pyramid_BM(Chromosome& source, list<int>& mask, Chromosome& des) {
     if (cover == 0) {
         (*pHash).erase(des.getKey());
         (*pHash)[trial.getKey()] = trial.getFitness();
-        *(des.getUplink()) = trial;
+        
+        if (des.getUplink() != 0)
+            *(des.getUplink()) = trial;
+        else {
+            des.setUplink(&trial);
+            nextLayer->add_unique(trial);
+        }
     }
     else if (cover == 1) {
         Chromosome* upLink = des.getUplink();
@@ -391,20 +397,28 @@ bool DSMGA2::pyramid_BM_Equal(Chromosome& source, list<int>& mask, Chromosome& d
         for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
             trialUp.setVal(*it, source.getVal(*it));
 
-        if (trialUp.getFitness() - des.getFitness() > diff && cover == 0) {
+        if (cover == 0 && trialUp.getFitness() - des.getFitness() > diff) {
             cover = 1;
             EQ = false;
-        }
-        else if (cover == -1 && trialUp.getFitness() >= des.getFitness() ) {
+        } else if (cover == -1 && trialUp.getFitness() > des.getFitness() ) {
             cover = 1;
-            EQ = (trialUp.getFitness() == des.getFitness());
+            EQ = false;
+        } else if (cover == -1 && trialUp.getFitness() >= des.getFitness() ) {
+            cover = 1;
+            EQ = true;
         }
     }
 
     if (cover == 0) {
         (*pHash).erase(des.getKey());
         (*pHash)[trial.getKey()] = trial.getFitness();
-        *(des.getUplink()) = trial;
+        
+        if (des.getUplink() != 0)
+            *(des.getUplink()) = trial;
+        else {
+            des.setUplink(&trial);
+            nextLayer->add_unique(trial);
+        }
     }
     else if (cover == 1) {
         Chromosome* upLink = des.getUplink();
@@ -416,7 +430,7 @@ bool DSMGA2::pyramid_BM_Equal(Chromosome& source, list<int>& mask, Chromosome& d
     return (cover != -1);
 }
 
-void DSMGA2::pyramid_restrictedMixing(Chromosome& ch) {
+bool DSMGA2::pyramid_restrictedMixing(Chromosome& ch) {
 
     int r = myRand.uniformInt(0, ell-1);
 
@@ -446,7 +460,7 @@ void DSMGA2::pyramid_restrictedMixing(Chromosome& ch) {
                 pyramid_BM(ch, mask, population[orderN[i]]);
         }
     }
-
+    return taken;
 }
 
 void DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
@@ -754,7 +768,7 @@ void DSMGA2::mixing() {
 
 }
 
-void DSMGA2::pyramid_mixing() {
+bool DSMGA2::pyramid_mixing() {
 
     if (SELECTION)
         selection();

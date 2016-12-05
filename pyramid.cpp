@@ -1,5 +1,29 @@
 #include "pyramid.h"
 
+void Pyramid::doIt (bool output) {
+    while (shouldTerminate()) {
+        for (int i = 0; i < (ell << 1); ++i) {
+            Chromosome c;
+            c.initR(ell);
+
+            layers.front().add_unique(c);
+        }
+
+        for (size_t i = 0, size = layers.size(); i < size; ++i) {
+            if (doOneLayer(i, output))
+                break;
+        }
+    }
+}
+
+bool Pyramid::shouldTerminate() {
+    bool term = false;
+    for (size_t i = 0; !term && i < layers.size(); ++i){
+        term |= layers[i].shouldTerminate();
+    }
+    return term;
+}
+
 bool Pyramid::add_unique(Chromosome& chromosome, size_t numOfLayer) {
     if (numOfLayer >= layers.size()) {
         printf("add_unique, numOfLayer: %zu, layers.size(): %zu", numOfLayer, layers.size());
@@ -9,7 +33,7 @@ bool Pyramid::add_unique(Chromosome& chromosome, size_t numOfLayer) {
     return layers[numOfLayer].add_unique(chromosome);
 }
 
-void Pyramid::doOneLayer(int numOfLayer, bool output) {
+bool Pyramid::doOneLayer(int numOfLayer, bool output) {
     assert(numOfLayer < layers.size());
 
     if (numOfLayer == layers.size() - 1)
@@ -20,12 +44,12 @@ void Pyramid::doOneLayer(int numOfLayer, bool output) {
 
     layer.buildFastCounting();
     layer.buildGraph();
-    while (!layer.shouldTerminate()) {
-        layer.pyramid_oneRun(output);
+    
+    bool success = layer.pyramid_oneRun(output);
 
-        if (numOfLayer + 1 < layers.size())
-            layers[numOfLayer + 1].refreshStats(output);
-    }
+    layers[numOfLayer + 1].refreshStats(output);
+
+    return success;
 }
 
 void Pyramid::add_one_layer() {

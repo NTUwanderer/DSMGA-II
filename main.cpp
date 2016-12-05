@@ -13,12 +13,24 @@
 #include "global.h"
 #include "chromosome.h"
 
+#include "pyramid.h"
+
 using namespace std;
 
 
 int
 main (int argc, char *argv[]) {
+    if (argc == 4) {
+        int ell = atoi (argv[1]); // problem size
+        int fffff = atoi (argv[2]); // function
+        int display = atoi (argv[3]);
 
+        Pyramid pyramid(ell, fffff);
+
+        pyramid.doIt(display);
+
+        return 0;
+    }
 
     if (argc != 9) {
         printf ("DSMGA2 ell nInitial function maxGen maxFe repeat display rand_seed\n");
