@@ -95,7 +95,7 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
         fastCounting[i].init(nCurrent);
 
 
-    (*pHash).clear();
+    // (*pHash).clear();
     pHash = hash;
     for (int i=0; i<nCurrent; ++i) {
         population[i].initR(ell);
@@ -778,21 +778,28 @@ bool DSMGA2::pyramid_mixing() {
 
     int repeat = (ell>50)? ell/50: 1;
 
+    bool flag = false;
+
     for (int k=0; k<repeat; ++k) {
 
         genOrderN();
         for (int i=0; i<nCurrent; ++i) {
-            pyramid_restrictedMixing(population[orderN[i]]);
+            flag |= pyramid_restrictedMixing(population[orderN[i]]);
             if (Chromosome::hit) break;
         }
         if (Chromosome::hit) break;
     }
+
+    return flag;
 }
 
 inline bool DSMGA2::isInP(const Chromosome& ch) const {
-
+    printf("state 1 %u\n");
     unordered_map<unsigned long, double>::const_iterator it = (*pHash).find(ch.getKey());
-    return (it != (*pHash).end());
+    printf("state 2\n");
+    bool result = (it != (*pHash).end());
+    printf("state 3\n");
+    return result;
 }
 
 inline void DSMGA2::genOrderN() {
@@ -957,12 +964,15 @@ bool DSMGA2::add_unique(Chromosome& chromosome) {
     if (isInP(chromosome))
         return false;
 
+
+    printf("o\n");
     ++nCurrent;
     population.push_back(chromosome);
     chromosome = population.back();
 
+    printf("konkon\n");
     double f = chromosome.getFitness();
     (*pHash)[chromosome.getKey()] = f;
-
+    printf("pHash->size(): %zi \n", pHash->size());
     return true;
 }

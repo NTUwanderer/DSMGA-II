@@ -20,25 +20,28 @@ using namespace std;
 
 int
 main (int argc, char *argv[]) {
-    if (argc == 4) {
+    if (argc == 5) {
         int ell = atoi (argv[1]); // problem size
         int fffff = atoi (argv[2]); // function
         int display = atoi (argv[3]);
         int repeat = atoi (argv[4]);
 
-        Pyramid pyramid(ell, fffff);
+        myRand.seed((unsigned long)123);
+
 
         int failNum = 0;
         Statistics stGen, stFE, stLSFE;
 
         for (int i = 0; i < repeat; ++i){  
+            Pyramid pyramid(ell, fffff);
             pyramid.doIt(display);
 
             bool ff = false;
             for (size_t i = 0; i < pyramid.layers.size(); ++i)
                 ff = (ff || pyramid.layers[i].foundOptima());
 
-            if (!ff){
+            printf("konkon %d\n", pyramid.layers.size());   
+            if (!ff) {
                 failNum++;
                 printf("-");
             }

@@ -14,6 +14,7 @@
 class Pyramid {
 public:
     Pyramid (int _ell, int _fffff): ell(_ell), fffff(_fffff) {   
+        pHash.clear();
         add_one_layer();
     } 
 
@@ -31,7 +32,7 @@ public:
     // return true if successfully added
     bool add_unique (Chromosome&, size_t);
 
-    bool doOneLayer (int, bool);
+    bool doOneLayer (size_t, bool);
 
     void add_one_layer();
 };

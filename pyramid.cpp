@@ -1,8 +1,8 @@
 #include "pyramid.h"
 
 void Pyramid::doIt (bool output) {
-    while (shouldTerminate()) {
-        for (int i = 0; i < (ell << 1); ++i) {
+    while (!shouldTerminate()) {
+        for (int i = 0; i < ell; ++i) {
             Chromosome c;
             c.initR(ell);
 
@@ -33,14 +33,19 @@ bool Pyramid::add_unique(Chromosome& chromosome, size_t numOfLayer) {
     return layers[numOfLayer].add_unique(chromosome);
 }
 
-bool Pyramid::doOneLayer(int numOfLayer, bool output) {
+bool Pyramid::doOneLayer(size_t numOfLayer, bool output) {
     assert(numOfLayer < layers.size());
 
-    if (numOfLayer == layers.size() - 1)
+    printf("sss %d %d\n", numOfLayer, layers.size());
+    printf("\nlala\n");
+    DSMGA2 &layer = layers[numOfLayer];
+    printf("hahahaha\n");
+    if (numOfLayer == layers.size() - 1) {
+        printf("ffs\n");
         add_one_layer();
-
-    //* really learn model
-    DSMGA2 layer = layers[numOfLayer];
+        printf("hh  %d\n", (numOfLayer == layers.size() - 1));
+        layer.setNextLayer(&(layers[layers.size() - 1]));
+    }
 
     layer.buildFastCounting();
     layer.buildGraph();
@@ -54,7 +59,7 @@ bool Pyramid::doOneLayer(int numOfLayer, bool output) {
 
 void Pyramid::add_one_layer() {
     DSMGA2 init(ell, ell << 1 , 1, ell * ell / 3, fffff, &pHash);
-        
+    
     layers.push_back(init);
 }
 
