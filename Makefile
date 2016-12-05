@@ -20,7 +20,7 @@ TLIB = -lm
 
 SRC = $(SRC1) $(SRC2) $(SRC3)
 
-SRC1 = chromosome.cpp dsmga2.cpp fastcounting.cpp global.cpp main.cpp mt19937ar.cpp myrand.cpp spin.cpp nk-wa.cpp sat.cpp
+SRC1 = chromosome.cpp dsmga2.cpp fastcounting.cpp global.cpp main.cpp mt19937ar.cpp myrand.cpp spin.cpp nk-wa.cpp sat.cpp pyramid.cpp
 
 SRC2 = chromosome.cpp dsmga2.cpp fastcounting.cpp global.cpp sweep.cpp mt19937ar.cpp myrand.cpp spin.cpp nk-wa.cpp sat.cpp
 
@@ -62,14 +62,14 @@ fastcounting.o: global.h myrand.h mt19937ar.h bitwisedistance.h spin.h
 fastcounting.o: nk-wa.h doublelinkedlistarray.h zkey.h sat.h fastcounting.h
 global.o: myrand.h mt19937ar.h statistics.h doublelinkedlistarray.h zkey.h
 global.o: chromosome.h global.h bitwisedistance.h spin.h nk-wa.h sat.h
-main.o: statistics.h dsmga2.h chromosome.h global.h myrand.h mt19937ar.h
-main.o: bitwisedistance.h spin.h nk-wa.h doublelinkedlistarray.h zkey.h
+main.o: statistics.h dsmga2.h chromosome.h global.h myrand.h mt19937ar.h pyramid.h
+main.o: bitwisedistance.h spin.h nk-wa.h doublelinkedlistarray.h zkey.h pyramid.h
 main.o: sat.h trimatrix.h fastcounting.h
 myrand.o: myrand.h mt19937ar.h
 spin.o: global.h myrand.h mt19937ar.h bitwisedistance.h spin.h
 spin.o: nk-wa.h doublelinkedlistarray.h zkey.h sat.h
 nk-wa.o: nk-wa.h
-pyramid.o: pyramid.h
+pyramid.o: pyramid.h pyramid.cpp
 sat.o: sat.h
 chromosome.o: spin.h chromosome.h global.h myrand.h mt19937ar.h
 chromosome.o: bitwisedistance.h nk-wa.h doublelinkedlistarray.h zkey.h sat.h

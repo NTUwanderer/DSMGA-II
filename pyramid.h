@@ -18,8 +18,8 @@ public:
     } 
 
     void doIt (bool);
-    void printStatus const ();
-private:
+    void printStatus();
+public:
     vector<DSMGA2> layers;
     unordered_map<unsigned long, double> pHash;
 

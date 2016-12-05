@@ -57,3 +57,7 @@ void Pyramid::add_one_layer() {
         
     layers.push_back(init);
 }
+
+void Pyramid::printStatus() {
+    return ;
+}

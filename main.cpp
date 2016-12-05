@@ -24,11 +24,33 @@ main (int argc, char *argv[]) {
         int ell = atoi (argv[1]); // problem size
         int fffff = atoi (argv[2]); // function
         int display = atoi (argv[3]);
+        int repeat = atoi (argv[4]);
 
         Pyramid pyramid(ell, fffff);
 
-        pyramid.doIt(display);
+        int failNum = 0;
+        Statistics stGen, stFE, stLSFE;
 
+        for (int i = 0; i < repeat; ++i){  
+            pyramid.doIt(display);
+
+            bool ff = false;
+            for (size_t i = 0; i < pyramid.layers.size(); ++i)
+                ff = (ff || pyramid.layers[i].foundOptima());
+
+            if (!ff){
+                failNum++;
+                printf("-");
+            }
+            else {
+                stGen.record(pyramid.layers.size());
+                stFE.record (Chromosome::hitnfe);
+                stLSFE.record (Chromosome::lsnfe);
+            }
+            fflush (NULL);
+        }
+        printf ("\n");
+        printf ("%f  %f  %f %d\n", stGen.getMean (), stFE.getMean(), stLSFE.getMean(), failNum);
         return 0;
     }
 
