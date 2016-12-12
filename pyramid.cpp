@@ -6,7 +6,7 @@ void Pyramid::doIt (bool output) {
             Chromosome c;
             c.initR(ell);
 
-            layers.front().add_unique(c);
+            layers.front()->add_unique(c);
         }
 
         for (size_t i = 0, size = layers.size(); i < size; ++i) {
@@ -18,8 +18,8 @@ void Pyramid::doIt (bool output) {
 
 bool Pyramid::shouldTerminate() {
     bool term = false;
-    for (size_t i = 0; !term && i < layers.size(); ++i){
-        term |= layers[i].shouldTerminate();
+    for (size_t i = 0; !term && i < layers.size(); ++i) {
+        term |= (layers[i]->shouldTerminate());
     }
     return term;
 }
@@ -30,7 +30,7 @@ bool Pyramid::add_unique(Chromosome& chromosome, size_t numOfLayer) {
         return false;
     }
 
-    return layers[numOfLayer].add_unique(chromosome);
+    return layers[numOfLayer]->add_unique(chromosome);
 }
 
 bool Pyramid::doOneLayer(size_t numOfLayer, bool output) {
@@ -38,27 +38,28 @@ bool Pyramid::doOneLayer(size_t numOfLayer, bool output) {
 
     printf("sss %d %d\n", numOfLayer, layers.size());
     printf("\nlala\n");
-    DSMGA2 &layer = layers[numOfLayer];
+    DSMGA2* layer = layers[numOfLayer];
     printf("hahahaha\n");
     if (numOfLayer == layers.size() - 1) {
         printf("ffs\n");
         add_one_layer();
         printf("hh  %d\n", (numOfLayer == layers.size() - 1));
-        layer.setNextLayer(&(layers[layers.size() - 1]));
+        layer->setNextLayer((layers[layers.size() - 1]));
     }
 
-    layer.buildFastCounting();
-    layer.buildGraph();
+    layer->buildFastCounting();
+    layer->buildGraph();
     
-    bool success = layer.pyramid_oneRun(output);
+    bool success = layer->pyramid_oneRun(output);
 
-    layers[numOfLayer + 1].refreshStats(output);
+    layers[numOfLayer + 1]->refreshStats(output);
 
     return success;
 }
 
 void Pyramid::add_one_layer() {
-    DSMGA2 init(ell, ell << 1 , 1, ell * ell / 3, fffff, &pHash);
+    printf("ell: %i, fffff: %i\n", ell, fffff);
+    DSMGA2* init = new DSMGA2(ell, ell << 1 , 1, ell * ell / 3, fffff, &pHash);
     
     layers.push_back(init);
 }

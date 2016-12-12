@@ -16,12 +16,18 @@ public:
     Pyramid (int _ell, int _fffff): ell(_ell), fffff(_fffff) {   
         pHash.clear();
         add_one_layer();
+
+        Chromosome::function = (Chromosome::Function)fffff;
+        Chromosome::nfe = 0;
+        Chromosome::lsnfe = 0;
+        Chromosome::hitnfe = 0;
+        Chromosome::hit = false;
     } 
 
     void doIt (bool);
     void printStatus();
 public:
-    vector<DSMGA2> layers;
+    vector<DSMGA2*> layers;
     unordered_map<unsigned long, double> pHash;
 
     int ell;

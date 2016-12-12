@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2015 Tian-Li Yu and Shih-Huan Hsu                       *
- *   tianliyu@ntu.edu.tw                                                   *
+ *   tianliyu@ntu.edu.tw                                                     *
  ***************************************************************************/
 
 
@@ -38,7 +38,7 @@ main (int argc, char *argv[]) {
 
             bool ff = false;
             for (size_t i = 0; i < pyramid.layers.size(); ++i)
-                ff = (ff || pyramid.layers[i].foundOptima());
+                ff = (ff || pyramid.layers[i]->foundOptima());
 
             printf("konkon %d\n", pyramid.layers.size());   
             if (!ff) {
