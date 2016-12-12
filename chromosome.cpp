@@ -28,10 +28,8 @@ Chromosome::Chromosome (int n_length) {
 }
 
 Chromosome::Chromosome (const Chromosome& c) {
-    if (length != c.length) {
-        length = c.length;
-        init (length);
-    }
+    length = c.length;
+    init (length);
 
     evaluated = c.evaluated;
     fitness = c.fitness;
