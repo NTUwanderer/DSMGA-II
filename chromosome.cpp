@@ -27,6 +27,19 @@ Chromosome::Chromosome (int n_length) {
     uplink = 0;
 }
 
+Chromosome::Chromosome (const Chromosome& c) {
+    if (length != c.length) {
+        length = c.length;
+        init (length);
+    }
+
+    evaluated = c.evaluated;
+    fitness = c.fitness;
+    lengthLong = c.lengthLong;
+    key = c.key;
+
+    memcpy(gene, c.gene, sizeof(long) * lengthLong);
+}
 
 Chromosome::~Chromosome () {
     if (gene != NULL) delete []gene;
