@@ -70,11 +70,11 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
     ell = n_ell;
     nCurrent = (n_nInitial/2)*2;  // has to be even
 
-    Chromosome::function = (Chromosome::Function)fffff;
-    Chromosome::nfe = 0;
-    Chromosome::lsnfe = 0;
-    Chromosome::hitnfe = 0;
-    Chromosome::hit = false;
+    // Chromosome::function = (Chromosome::Function)fffff;
+    // Chromosome::nfe = 0;
+    // Chromosome::lsnfe = 0;
+    // Chromosome::hitnfe = 0;
+    // Chromosome::hit = false;
 
     selectionPressure = 2;
     maxGen = n_maxGen;
@@ -109,6 +109,50 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
     }
 
     nextLayer = 0;
+}
+
+DSMGA2::DSMGA2 (const DSMGA2& dsmga2) {
+    ell = dsmga2.ell;
+    nCurrent = dsmga2.nCurrent;
+    EQ = dsmga2.EQ;
+    pHash = dsmga2.pHash;
+
+    masks = new list<int>[ell];    
+    selectionIndex = new int[nCurrent];
+    orderN = new int[nCurrent]; //
+    orderELL = new int[ell]; //
+    selectionPressure = dsmga2.selectionPressure;
+
+    maxGen = dsmga2.maxGen;
+    maxFe = dsmga2.maxFe;
+    repeat = dsmga2.repeat;
+    generation = dsmga2.generation;
+    bestIndex = dsmga2.bestIndex;
+
+    population = dsmga2.population;
+    fastCounting = new FastCounting[ell];
+
+    graph = dsmga2.graph;
+
+    bestIndex = dsmga2.bestIndex;
+    masks = new list<int>[ell];
+    
+    previousFitnessMean = dsmga2.previousFitnessMean;
+    stFitness = dsmga2.stFitness;
+
+    fastCounting = new FastCounting[ell];
+
+    nextLayer = dsmga2.nextLayer;
+
+    for (size_t i = 0; i < nCurrent; ++i) {
+        selectionIndex[i] = dsmga2.selectionIndex[i];
+        orderN[i] = dsmga2.orderN[i];
+    }
+    for (size_t i = 0; i < ell; ++i) {
+        orderELL[i] = dsmga2.orderELL[i];
+        fastCounting[i] = dsmga2.fastCounting[i];
+        masks[i] = dsmga2.masks[i];
+    }
 }
 
 DSMGA2::~DSMGA2 () {
@@ -216,7 +260,6 @@ bool DSMGA2::shouldTerminate () {
         if (generation > maxGen)
             termination = true;
     }
-
 
     if (population[0].getMaxFitness() <= stFitness.getMax() )
         termination = true;
@@ -975,4 +1018,50 @@ bool DSMGA2::add_unique(Chromosome& chromosome) {
     (*pHash)[chromosome.getKey()] = f;
     printf("pHash->size(): %zi \n", pHash->size());
     return true;
+}
+
+DSMGA2& DSMGA2::operator= (const DSMGA2& dsmga2) {
+    ell = dsmga2.ell;
+    nCurrent = dsmga2.nCurrent;
+    EQ = dsmga2.EQ;
+    pHash = dsmga2.pHash;
+
+    masks = new list<int>[ell];    
+    selectionIndex = new int[nCurrent];
+    orderN = new int[nCurrent]; //
+    orderELL = new int[ell]; //
+    selectionPressure = dsmga2.selectionPressure;
+
+    maxGen = dsmga2.maxGen;
+    maxFe = dsmga2.maxFe;
+    repeat = dsmga2.repeat;
+    generation = dsmga2.generation;
+    bestIndex = dsmga2.bestIndex;
+
+    population = dsmga2.population;
+    fastCounting = new FastCounting[ell];
+
+    graph = dsmga2.graph;
+
+    bestIndex = dsmga2.bestIndex;
+    masks = new list<int>[ell];
+    
+    previousFitnessMean = dsmga2.previousFitnessMean;
+    stFitness = dsmga2.stFitness;
+
+    fastCounting = new FastCounting[ell];
+
+    nextLayer = dsmga2.nextLayer;
+
+    for (size_t i = 0; i < nCurrent; ++i) {
+        selectionIndex[i] = dsmga2.selectionIndex[i];
+        orderN[i] = dsmga2.orderN[i];
+    }
+    for (size_t i = 0; i < ell; ++i) {
+        orderELL[i] = dsmga2.orderELL[i];
+        fastCounting[i] = dsmga2.fastCounting[i];
+        masks[i] = dsmga2.masks[i];
+    }
+
+    return (*this);
 }

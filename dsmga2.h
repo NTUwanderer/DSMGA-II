@@ -20,6 +20,8 @@ public:
     DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff);
     DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff, unordered_map<unsigned long, double> *p);
 
+    DSMGA2 (const DSMGA2& dsmga2);
+
     ~DSMGA2 ();
 
     void selection ();
@@ -64,6 +66,8 @@ public:
 
     void setNextLayer(DSMGA2* layer);
     bool add_unique(Chromosome& chromosome);
+
+    DSMGA2 & operator = (const DSMGA2& dsmga2);
 
 //protected:
 public:
