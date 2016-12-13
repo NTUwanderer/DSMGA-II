@@ -1,3 +1,4 @@
+.PHONY: clean run
 
 CXX = g++
 CXXFLAGS = -O0 -g -std=c++11
@@ -50,6 +51,8 @@ depend:
 
 clean:
 	rm -f $(OBJ)
+run:
+	./DSMGA2 100 1 1 10
 
 # DO NOT DELETE
 

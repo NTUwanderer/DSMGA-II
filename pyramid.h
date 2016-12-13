@@ -10,7 +10,9 @@ class Pyramid
         Pyramid(int ell, int fffff);
         ~Pyramid();
 
-        void printStatus();
+        void printStatus() const;
+
+        bool add_unique(Chromosome*, size_t, size_t);
 
     private:
         vector<DSMGA2*> layers;

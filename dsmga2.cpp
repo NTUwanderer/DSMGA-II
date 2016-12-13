@@ -66,12 +66,48 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     }
 }
 
-DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff, unordered_map<unsigned long, double>* hash) : DSMGA2(n_ell, n_nInitial, n_maxGen, n_maxFe, fffff)
+// Initializer with previous Hash.
+DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff, unordered_map<unsigned long, double>* hash)
 {
-    delete pHash;
-    PYRA = 1;
+    previousFitnessMean = -INF;
+    ell = n_ell;
+    nCurrent = (n_nInitial/2)*2;  // has to be even
+
+    Chromosome::lsnfe = 0;
+    Chromosome::hitnfe = 0;
+    Chromosome::hit = false;
+
+    selectionPressure = 2;
+    maxGen = n_maxGen;
+    maxFe = n_maxFe;
+
+    cout << "something" << endl;
+    cout << hash << endl;
+    graph.init(ell);
+
+    bestIndex = -1;
+    masks = new list<int>[ell];
+    selectionIndex = new int[nCurrent];
+    orderN = new int[nCurrent];
+    orderELL = new int[ell];
+    population.resize(nCurrent);
+    fastCounting = new FastCounting[ell];
+
+    for (int i = 0; i < ell; i++)
+        fastCounting[i].init(nCurrent);
+
+    // PYRA = 1;
     pHash = hash;
-    
+    for (int i=0; i<nCurrent; ++i) {
+        population[i].initR(ell);
+        double f = population[i].getFitness();
+        (*pHash)[population[i].getKey()] = f;
+    }
+
+    if (GHC) {
+        for (int i=0; i < nCurrent; i++)
+            population[i].GHC();
+    }
 }
 
 
@@ -84,7 +120,8 @@ DSMGA2::~DSMGA2 () {
     delete []orderN;
     delete []orderELL;
     delete []selectionIndex;
-    delete []population;
+//    delete []population;
+// switched to vector
     delete []fastCounting;
 }
 
@@ -626,4 +663,23 @@ void DSMGA2::tournamentSelection () {
         }
         selectionIndex[i] = winner;
     }
+}
+
+// Add the chromosome in array ch, with array length = size, 
+// Into the population of the DSMGA2
+// Therefore, adding nCurrent while keeping nCurrent even
+// if nCurrent > 2 but odd, not adding the last one.
+bool DSMGA2::add_unique (Chromosome* ch, size_t size)
+{   
+    if (size < 2) return false;
+    else if (size & 1) size = (size >> 1) << 1;
+
+    for (size_t i = 0; i < size; ++i)
+    {   
+        
+    }
+
+    nCurrent += size;
+
+    return true;
 }

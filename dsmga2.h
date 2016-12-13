@@ -39,6 +39,7 @@ class DSMGA2 {
 
         bool shouldTerminate ();
 
+
         bool foundOptima ();
 
         int getGeneration () const {
@@ -48,6 +49,7 @@ class DSMGA2 {
         bool isInP(const Chromosome& ) const;
         void genOrderN();
         void genOrderELL();
+
 
         void showStatistics ();
 
@@ -74,7 +76,7 @@ class DSMGA2 {
         int generation;
         int bestIndex;
 
-        Chromosome* population;
+        vector<Chromosome> population;
         FastCounting* fastCounting;
 
         TriMatrix<double> graph;
@@ -96,6 +98,7 @@ class DSMGA2 {
         size_t findSize(Chromosome&, list<int>&) const;
         size_t findSize(Chromosome&, list<int>&, Chromosome&) const;
 
+        bool add_unique(Chromosome*, size_t); 
 
 };
 
