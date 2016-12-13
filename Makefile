@@ -1,7 +1,7 @@
 
 CXX = g++
-#CXXFLAGS = -O0 -g -std=c++11
-CXXFLAGS = -O2 -Wall -march=native -std=c++11
+CXXFLAGS = -O0 -g -std=c++11
+#CXXFLAGS = -O2 -Wall -march=native -std=c++11
 INCLUDE = 
 TLIB = -lm
 
@@ -20,7 +20,7 @@ TLIB = -lm
 
 SRC = $(SRC1) $(SRC2) $(SRC3)
 
-SRC1 = chromosome.cpp dsmga2.cpp fastcounting.cpp global.cpp main.cpp mt19937ar.cpp myrand.cpp spin.cpp nk-wa.cpp sat.cpp
+SRC1 = chromosome.cpp dsmga2.cpp fastcounting.cpp global.cpp main.cpp mt19937ar.cpp myrand.cpp spin.cpp nk-wa.cpp sat.cpp pyramid.cpp
 
 SRC2 = chromosome.cpp dsmga2.cpp fastcounting.cpp global.cpp sweep.cpp mt19937ar.cpp myrand.cpp spin.cpp nk-wa.cpp sat.cpp
 
@@ -63,8 +63,8 @@ fastcounting.o: nk-wa.h doublelinkedlistarray.h zkey.h sat.h fastcounting.h
 global.o: myrand.h mt19937ar.h statistics.h doublelinkedlistarray.h zkey.h
 global.o: chromosome.h global.h bitwisedistance.h spin.h nk-wa.h sat.h
 main.o: statistics.h dsmga2.h chromosome.h global.h myrand.h mt19937ar.h
-main.o: bitwisedistance.h spin.h nk-wa.h doublelinkedlistarray.h zkey.h
-main.o: sat.h trimatrix.h fastcounting.h
+main.o: bitwisedistance.h spin.h nk-wa.h doublelinkedlistarray.h zkey.h 
+main.o: sat.h trimatrix.h fastcounting.h pyramid.h
 myrand.o: myrand.h mt19937ar.h
 spin.o: global.h myrand.h mt19937ar.h bitwisedistance.h spin.h
 spin.o: nk-wa.h doublelinkedlistarray.h zkey.h sat.h
@@ -87,3 +87,5 @@ spin.o: global.h myrand.h mt19937ar.h bitwisedistance.h spin.h
 spin.o: nk-wa.h doublelinkedlistarray.h zkey.h sat.h
 nk-wa.o: nk-wa.h
 sat.o: sat.h
+pyramid.o: pyramid.cpp
+

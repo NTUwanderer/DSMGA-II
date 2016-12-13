@@ -17,6 +17,8 @@
 #include <iomanip>
 using namespace std;
 //#define DEBUG
+//
+bool DSMGA2::PYRA; // Defining the static variable
 
 DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff) {
 
@@ -48,12 +50,14 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     for (int i = 0; i < ell; i++)
         fastCounting[i].init(nCurrent);
 
-
-    pHash.clear();
+ 
+    PYRA = 0;
+    pHash = new unordered_map<unsigned long, double>;
+    pHash->clear();
     for (int i=0; i<nCurrent; ++i) {
         population[i].initR(ell);
         double f = population[i].getFitness();
-        pHash[population[i].getKey()] = f;
+        (*pHash)[population[i].getKey()] = f;
     }
 
     if (GHC) {
@@ -62,8 +66,20 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     }
 }
 
+DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff, unordered_map<unsigned long, double>* hash) : DSMGA2(n_ell, n_nInitial, n_maxGen, n_maxFe, fffff)
+{
+    delete pHash;
+    PYRA = 1;
+    pHash = hash;
+    
+}
+
+
 
 DSMGA2::~DSMGA2 () {
+    if (!PYRA)
+        delete pHash;
+        
     delete []masks;
     delete []orderN;
     delete []orderELL;
@@ -262,8 +278,8 @@ void DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
         trial.setVal(*it, source.getVal(*it));
 
     if (trial.getFitness() > des.getFitness()) {
-        pHash.erase(des.getKey());
-        pHash[trial.getKey()] = trial.getFitness();
+        pHash->erase(des.getKey());
+        (*pHash)[trial.getKey()] = trial.getFitness();
         des = trial;
         return;
     }
@@ -278,8 +294,8 @@ void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
         trial.setVal(*it, source.getVal(*it));
 
     if (trial.getFitness() > des.getFitness()) {
-        pHash.erase(des.getKey());
-        pHash[trial.getKey()] = trial.getFitness();
+        pHash->erase(des.getKey());
+        (*pHash)[trial.getKey()] = trial.getFitness();
 
         EQ = false;
         des = trial;
@@ -287,8 +303,8 @@ void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
     }
 
     if (trial.getFitness() >= des.getFitness()) {
-        pHash.erase(des.getKey());
-        pHash[trial.getKey()] = trial.getFitness();
+        pHash->erase(des.getKey());
+        (*pHash)[trial.getKey()] = trial.getFitness();
 
         des = trial;
         return;
@@ -363,8 +379,8 @@ bool DSMGA2::restrictedMixing(Chromosome& ch, list<int>& mask) {
         cout << endl << endl;
         #endif
         /////////
-            pHash.erase(ch.getKey());
-            pHash[trial.getKey()] = trial.getFitness();
+            pHash->erase(ch.getKey());
+            (*pHash)[trial.getKey()] = trial.getFitness();
 
             taken = true;
             ch = trial;
@@ -454,8 +470,8 @@ void DSMGA2::mixing() {
 
 inline bool DSMGA2::isInP(const Chromosome& ch) const {
 
-    unordered_map<unsigned long, double>::const_iterator it = pHash.find(ch.getKey());
-    return (it != pHash.end());
+    unordered_map<unsigned long, double>::const_iterator it = pHash->find(ch.getKey());
+    return (it != pHash->end());
 }
 
 inline void DSMGA2::genOrderN() {
