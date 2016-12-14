@@ -44,7 +44,7 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     selectionIndex = new int[nCurrent];
     orderN = new int[nCurrent];
     orderELL = new int[ell];
-    population = new Chromosome[nCurrent];
+    population.resize(nCurrent);
     fastCounting = new FastCounting[ell];
 
     for (int i = 0; i < ell; i++)
