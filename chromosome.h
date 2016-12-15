@@ -130,7 +130,7 @@ public:
 
 protected:
 
-    unsigned long *gene;
+    vector<unsigned long> gene;
     int length;
     int lengthLong;
     double fitness;

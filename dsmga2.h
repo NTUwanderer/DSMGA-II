@@ -66,8 +66,8 @@ class DSMGA2 {
 
 
         list<int> *masks;
-        int *selectionIndex;
-        int *orderN;                             // for random order
+        vector<int> selectionIndex;
+        vector<int> orderN;                             // for random order
         int *orderELL;                             // for random order
         int selectionPressure;
         int maxGen;

@@ -41,8 +41,8 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
 
     bestIndex = -1;
     masks = new list<int>[ell];
-    selectionIndex = new int[nCurrent];
-    orderN = new int[nCurrent];
+    selectionIndex.resize(nCurrent);
+    orderN.resize(nCurrent);
     orderELL = new int[ell];
     population.resize(nCurrent);
     fastCounting = new FastCounting[ell];
@@ -87,8 +87,8 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
 
     bestIndex = -1;
     masks = new list<int>[ell];
-    selectionIndex = new int[nCurrent];
-    orderN = new int[nCurrent];
+    selectionIndex.resize(nCurrent);
+    orderN.resize(nCurrent);
     orderELL = new int[ell];
     population.resize(nCurrent);
     fastCounting = new FastCounting[ell];
@@ -117,9 +117,9 @@ DSMGA2::~DSMGA2 () {
         delete pHash;
         
     delete []masks;
-    delete []orderN;
+//    delete []orderN;
     delete []orderELL;
-    delete []selectionIndex;
+//    delete []selectionIndex;
 //    delete []population;
 // switched to vector
     delete []fastCounting;
@@ -512,7 +512,7 @@ inline bool DSMGA2::isInP(const Chromosome& ch) const {
 }
 
 inline void DSMGA2::genOrderN() {
-    myRand.uniformArray(orderN, nCurrent, 0, nCurrent-1);
+    myRand.uniformVector(orderN, nCurrent, 0, nCurrent-1);
 }
 
 inline void DSMGA2::genOrderELL() {
@@ -668,16 +668,21 @@ void DSMGA2::tournamentSelection () {
 // Add the chromosome in array ch, with array length = size, 
 // Into the population of the DSMGA2
 // Therefore, adding nCurrent while keeping nCurrent even
+// keeping orderN, selectionIndex consistent
 // if nCurrent > 2 but odd, not adding the last one.
-bool DSMGA2::add_unique (Chromosome* ch, size_t size)
-{   
+// 
+// TODO: Hope this works
+bool DSMGA2::add_unique (Chromosome* ch, size_t size) {
     if (size < 2) return false;
     else if (size & 1) size = (size >> 1) << 1;
 
-    for (size_t i = 0; i < size; ++i)
-    {   
-        
+    for (size_t i = 0; i < size; ++i) { 
+        population.push_back(ch[i]);       
+        (*pHash)[ch[i].getKey()] = ch[i].getFitness();
     }
+
+    orderN.resize(nCurrent + size);
+    selectionIndex.resize(nCurrent + size);
 
     nCurrent += size;
 

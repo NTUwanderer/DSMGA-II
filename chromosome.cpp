@@ -14,28 +14,28 @@
 Chromosome::Chromosome () {
     length = 0;
     lengthLong = 0;
-    gene = NULL;
+//    gene = NULL;
     evaluated = false;
 }
 
 Chromosome::Chromosome (int n_length) {
-    gene = NULL;
+//    gene = NULL;
     init (n_length);
 }
 
 
 Chromosome::~Chromosome () {
-    if (gene != NULL) delete []gene;
+//    if (gene != NULL) delete []gene;
 }
 
 void Chromosome::init (int _length) {
     length = _length;
     lengthLong = quotientLong(length)+1;
 
-    if (gene != NULL)
-        delete []gene;
+ //   if (gene != NULL)
+  //      delete []gene;
 
-    gene = new unsigned long [lengthLong];
+    gene.resize(lengthLong);
     gene[lengthLong-1] = 0;
 
     evaluated = false;
@@ -45,10 +45,11 @@ void Chromosome::init0 (int _length) {
     length = _length;
     lengthLong = quotientLong(length)+1;
 
-    if (gene != NULL)
-        delete []gene;
+//    if (gene != NULL)
+//        delete []gene;
 
-    gene = new unsigned long [lengthLong];
+    gene.resize(lengthLong);
+//    gene = new unsigned long [lengthLong];
 
     for (int i=0; i<lengthLong; ++i)
         gene[i] = 0;
@@ -61,10 +62,11 @@ void Chromosome::initR (int _length) {
     length = _length;
     lengthLong = quotientLong(length)+1;
 
-    if (gene != NULL)
-        delete []gene;
+    //if (gene != NULL)
+    //    delete []gene;
 
-    gene = new unsigned long [lengthLong];
+    gene.resize(lengthLong);
+    //gene = new unsigned long [lengthLong];
     gene[lengthLong-1] = 0;
 
     key = 0;
@@ -219,7 +221,8 @@ Chromosome& Chromosome::operator= (const Chromosome& c) {
     lengthLong = c.lengthLong;
     key = c.key;
 
-    memcpy(gene, c.gene, sizeof(long) * lengthLong);
+    gene = c.gene;
+//    memcpy(gene, c.gene, sizeof(long) * lengthLong);
 
     return *this;
 }

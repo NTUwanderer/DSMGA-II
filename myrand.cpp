@@ -18,6 +18,8 @@
 #include <math.h>
 #include <time.h>
 #include <stdlib.h>
+#include <vector> 
+
 #include "myrand.h"
 
 #ifdef PI
@@ -96,6 +98,22 @@ double MyRand::normal(double mean, double stdd) {
 
 int MyRand::uniformInt(int a, int b) {
     return (a + (int) (genrand_real2() * (b - a + 1)));
+}
+
+void MyRand::uniformVector(std::vector<int>& array, int num, int a, int b){
+    int * base = new int[b-a+1];
+    int i, r;
+
+    for (i = 0; i < b-a+1; ++i)
+        base[i] = a+i;
+    
+    for (i = 0; i < num; ++i){
+        r = uniformInt(0, b-a-i);
+        array[i] = base[r];
+        base[r] = base[ b - a - i ];
+    }
+
+    delete[] base;
 }
 
 void MyRand::uniformArray(int *array, int num, int a, int b) {

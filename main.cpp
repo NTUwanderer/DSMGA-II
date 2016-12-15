@@ -28,7 +28,6 @@ int main (int argc, char *argv[]) {
 
         pyra.add_unique(ch, 2, 0);
 
-
         pyra.printStatus();
         return 0;
     }

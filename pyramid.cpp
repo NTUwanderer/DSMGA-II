@@ -39,7 +39,7 @@ bool Pyramid::add_unique (Chromosome *ch, size_t size, size_t numOfLayer)
     for (size_t i = 0; i < size; ++i)
         if (pHash->find(ch[i].getKey()) != pHash->end()) return false;
     
-    return true;
+    return layers[numOfLayer]->add_unique(ch, size);
 }
 
 // General Debug purpose function

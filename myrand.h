@@ -22,6 +22,7 @@
 /**
   *@author Tian-Li Yu
   */
+#include <vector>
 
 #include "mt19937ar.h"
 
@@ -50,6 +51,8 @@ public:
     int uniformInt(int a, int b);
     /** No descriptions */
     void uniformArray(int *array, int num, int a, int b);
+    void uniformVector(std::vector<int> &array, int num, int a, int b);
+
 
     /** dice according to pr */
     int dice(double *pr, int size, double prSum=-1.0);
