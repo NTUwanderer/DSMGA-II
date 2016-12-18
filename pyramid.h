@@ -23,6 +23,8 @@ class Pyramid
         unordered_map<unsigned long, double> *pHash;
 
         void add_one_layer();
+
+        bool shouldTerminate() const;
 };
 
 #endif

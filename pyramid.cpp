@@ -34,12 +34,22 @@ Pyramid::~Pyramid()
 }
 
 bool Pyramid::add_unique (Chromosome *ch, size_t size, size_t numOfLayer)
-{   
+{
     assert(numOfLayer < layers.size());
+    cout << "shouldTerminate: " << shouldTerminate() << endl;
     for (size_t i = 0; i < size; ++i)
         if (pHash->find(ch[i].getKey()) != pHash->end()) return false;
     
     return layers[numOfLayer]->add_unique(ch, size);
+}
+
+bool Pyramid::shouldTerminate() const
+{
+    bool term = false;
+    for (size_t i = 0; !term && i < layers.size(); ++i) {
+        term |= (layers[i]->shouldTerminate());
+    }
+    return term;
 }
 
 // General Debug purpose function

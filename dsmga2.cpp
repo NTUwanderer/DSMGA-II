@@ -180,7 +180,7 @@ void DSMGA2::oneRun (bool output) {
 }
 
 
-bool DSMGA2::shouldTerminate () {
+bool DSMGA2::shouldTerminate () const {
     bool
     termination = false;
 

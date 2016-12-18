@@ -53,39 +53,39 @@ public:
     }
 
     /** get the number of samples */
-    long int getNumber () {
+    long int getNumber () const {
         return number;
     }
 
     /** get mean */
-    double getMean () {
+    double getMean () const {
         return sum / number;
     }
 
     /** get variance */
-    double getVariance () {
+    double getVariance () const {
         double mean = getMean ();
         return variance / number - mean * mean;
     }
 
     /** get standard deviation */
-    double getStdev () {
+    double getStdev () const {
         return::sqrt (getVariance ());
     }
 
-    double getMin () {
+    double getMin () const {
         return min;
     }
 
-    double getMax () {
+    double getMax () const {
         return max;
     }
 
-    double getSecondMax () {
+    double getSecondMax () const {
         return second_max;
     }
 
-    double getSecondMin () {
+    double getSecondMin () const {
         return second_min;
     }
 
