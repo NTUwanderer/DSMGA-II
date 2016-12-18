@@ -15,6 +15,9 @@ class Pyramid
         bool add_unique(Chromosome*, size_t, size_t);
 
     private:
+        int ell;
+        int fffff;
+
         vector<DSMGA2*> layers;
 
         // The pHash variable shared by the whole pyramid

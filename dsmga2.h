@@ -55,6 +55,8 @@ class DSMGA2 {
 
         bool isSteadyState ();
 
+        void setNextLayer(DSMGA2*);
+
         //protected:
     private:
 
@@ -84,6 +86,8 @@ class DSMGA2 {
         double previousFitnessMean;
         Statistics stFitness;
         unordered_map<unsigned long, double>* pHash; // to check if a chromosome is in the population
+
+        DSMGA2* nextLayer;
 
         // methods
         double computeMI(double, double, double, double) const;

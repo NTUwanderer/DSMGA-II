@@ -8,6 +8,8 @@
 //
 Pyramid::Pyramid(int ell, int fffff)
 {   
+    this->ell = ell;
+    this->fffff = fffff;
     pHash = new unordered_map<unsigned long, double>;
 	pHash->clear();  // Ensure the hash is cleared.
     cout << pHash << endl;
@@ -41,6 +43,15 @@ bool Pyramid::add_unique (Chromosome *ch, size_t size, size_t numOfLayer)
         if (pHash->find(ch[i].getKey()) != pHash->end()) return false;
     
     return layers[numOfLayer]->add_unique(ch, size);
+}
+
+void Pyramid::add_one_layer()
+{
+    DSMGA2* newLayer = new DSMGA2(ell, (ell << 1), -1, ell*ell/3, fffff, pHash);
+
+    layers.back()->setNextLayer(newLayer);
+
+    layers.push_back(newLayer);
 }
 
 bool Pyramid::shouldTerminate() const

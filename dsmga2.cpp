@@ -108,6 +108,8 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
         for (int i=0; i < nCurrent; i++)
             population[i].GHC();
     }
+
+    nextLayer = 0;
 }
 
 
@@ -687,4 +689,9 @@ bool DSMGA2::add_unique (Chromosome* ch, size_t size) {
     nCurrent += size;
 
     return true;
+}
+
+void DSMGA2::setNextLayer(DSMGA2* _next) {
+    assert(nextLayer == 0);
+    nextLayer = _next;
 }
