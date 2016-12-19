@@ -688,6 +688,14 @@ bool DSMGA2::add_unique (Chromosome* ch, size_t size) {
 
     nCurrent += size;
 
+    for (int i = 0; i < ell; i++)
+        fastCounting[i].init(nCurrent);
+
+    if (GHC) {
+        for (int i=nCurrent - size; i < nCurrent; i++)
+            population[i].GHC();
+    }
+
     return true;
 }
 
