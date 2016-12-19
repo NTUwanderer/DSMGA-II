@@ -11,18 +11,18 @@ Pyramid::Pyramid(int ell, int fffff)
     this->ell = ell;
     this->fffff = fffff;
     pHash = new unordered_map<unsigned long, double>;
-	pHash->clear();  // Ensure the hash is cleared.
+    pHash->clear();  // Ensure the hash is cleared.
     cout << pHash << endl;
-	
-	DSMGA2* init = new DSMGA2(ell, (ell << 1), -1, ell*ell/3, fffff, pHash);
+    
+    Chromosome::function = (Chromosome::Function)fffff;
+    Chromosome::nfe = 0;
+    Chromosome::lsnfe = 0;
+    Chromosome::hitnfe = 0;
+    Chromosome::hit = false;
+    
+    DSMGA2* init = new DSMGA2(ell, (ell << 1), -1, ell*ell/3, fffff, pHash);
     DSMGA2::PYRA = 1;
     layers.push_back(init);
-
-	Chromosome::function = (Chromosome::Function)fffff;
-	Chromosome::nfe = 0;
-	Chromosome::lsnfe = 0;
-	Chromosome::hitnfe = 0;
-	Chromosome::hit = false;
 }
 
 Pyramid::~Pyramid()
