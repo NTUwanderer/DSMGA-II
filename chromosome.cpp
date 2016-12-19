@@ -408,3 +408,11 @@ double Chromosome::satFitness() const {
     delete []x;
     return result;
 }
+
+Chromosome* Chromosome::getUplink() const {
+    return uplink;
+}
+
+void Chromosome::setUplink(Chromosome* link) {
+    uplink = link;
+}

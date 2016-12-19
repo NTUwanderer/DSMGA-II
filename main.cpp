@@ -19,16 +19,22 @@ using namespace std;
 
 int main (int argc, char *argv[]) {
 
+    if (argc == 4) {
+        int ell = atoi (argv[1]); // problem size
+        int fffff = atoi (argv[2]); // function
+        // int display = atoi (argv[3]);
+        int repeat = atoi (argv[3]);
 
-    if (argc == 5) {
         myRand.seed((unsigned long)123);
-        Pyramid pyra(100, 1);
-        Chromosome ch[2];
-        ch[0].initR(100); ch[1].initR(100);
 
-        pyra.add_unique(ch, 2, 0);
+        for (int i = 0; i < repeat; ++i) {
+            Pyramid pyra(ell, fffff);
+            
+            pyra.doIt();
 
-        pyra.printStatus();
+            pyra.printStatus();
+        }
+        
         return 0;
     }
     else if (argc != 9) {

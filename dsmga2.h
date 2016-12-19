@@ -57,6 +57,13 @@ class DSMGA2 {
 
         void setNextLayer(DSMGA2*);
 
+        void pyramid_oneRun ();
+
+        void pyramid_restrictedMixing(Chromosome&);
+        bool pyramid_restrictedMixing(Chromosome& ch, list<int>& mask);
+
+        bool pyramid_BM(Chromosome&, list<int>&, Chromosome&);
+        bool pyramid_BM_Equal(Chromosome&, list<int>&, Chromosome&);
         //protected:
     private:
 
@@ -102,7 +109,12 @@ class DSMGA2 {
         size_t findSize(Chromosome&, list<int>&) const;
         size_t findSize(Chromosome&, list<int>&, Chromosome&) const;
 
-        bool add_unique(Chromosome*, size_t); 
+        bool add_unique(Chromosome*, size_t);
+        Chromosome* add_unique(Chromosome*);
+
+        void updateStatistics();
+
+        void pyramid_mixing();
 
 };
 

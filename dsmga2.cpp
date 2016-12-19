@@ -73,16 +73,10 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
     ell = n_ell;
     nCurrent = (n_nInitial/2)*2;  // has to be even
 
-    Chromosome::lsnfe = 0;
-    Chromosome::hitnfe = 0;
-    Chromosome::hit = false;
-
     selectionPressure = 2;
     maxGen = n_maxGen;
     maxFe = n_maxFe;
 
-    cout << "something" << endl;
-    cout << hash << endl;
     graph.init(ell);
 
     bestIndex = -1;
@@ -110,6 +104,7 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
     }
 
     nextLayer = 0;
+    generation = 0;
 }
 
 
@@ -181,6 +176,47 @@ void DSMGA2::oneRun (bool output) {
     ++generation;
 }
 
+void DSMGA2::pyramid_oneRun () {
+    if (CACHE)
+        Chromosome::cache.clear();
+
+    mixing();
+
+    double max = -INF;
+    stFitness.reset ();
+    
+    for (int i = 0; i < nCurrent; ++i) {
+        double fitness = population[i].getFitness();
+        if (fitness > max) {
+            max = fitness;
+            bestIndex = i;
+        }
+        stFitness.record (fitness);
+
+    }
+
+    if (nextLayer != 0)
+        nextLayer->updateStatistics();    
+
+    // if (output)
+    //     showStatistics ();
+
+    // ++generation;
+}
+
+void DSMGA2::updateStatistics() {
+    double max = -INF;
+    stFitness.reset ();
+    for (int i = 0; i < nCurrent; ++i) {
+        double fitness = population[i].getFitness();
+        if (fitness > max) {
+            max = fitness;
+            bestIndex = i;
+        }
+        stFitness.record (fitness);
+
+    }
+}
 
 bool DSMGA2::shouldTerminate () const {
     bool
@@ -307,6 +343,37 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
         }
     }
 
+}
+
+void DSMGA2::pyramid_restrictedMixing(Chromosome& ch) {
+    int r = myRand.uniformInt(0, ell-1);
+
+    list<int> mask = masks[r];
+
+    size_t size = findSize(ch, mask);
+    if (size > (size_t)ell/2)
+        size = ell/2;
+
+    // prune mask to exactly size
+    while (mask.size() > size)
+        mask.pop_back();
+
+
+    bool taken = pyramid_restrictedMixing(ch, mask);
+
+    EQ = true;
+    if (taken) {
+
+        genOrderN();
+
+        for (int i=0; i<nCurrent; ++i) {
+
+            if (EQ)
+                pyramid_BM(ch, mask, population[orderN[i]]);
+            else
+                pyramid_BM_Equal(ch, mask, population[orderN[i]]);
+        }
+    }
 }
 
 void DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
@@ -440,6 +507,123 @@ bool DSMGA2::restrictedMixing(Chromosome& ch, list<int>& mask) {
 
 }
 
+bool DSMGA2::pyramid_restrictedMixing(Chromosome& ch, list<int>& mask) {
+    if (nextLayer == 0)
+        return false;
+
+    bool taken = false;
+    size_t lastUB = 0;
+
+    for (size_t ub = 1; ub <= mask.size(); ++ub) {
+
+        size_t size = 1;
+        Chromosome trial(ell);
+        trial = ch;
+
+        //2016-10-19
+        vector<int> takenMask;
+
+        for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it) {
+
+            //2016-10-19
+            takenMask.push_back(*it);
+
+            trial.flip(*it);
+
+            ++size;
+            if (size > ub) break;
+        }
+
+        //if (isInP(trial)) continue;
+        if (isInP(trial)) break;
+
+        /////////
+        #ifdef DEBUG
+        vector<int>::iterator it = takenMask.begin();
+        cout << " Taken Mask: [" << *it;
+        it++;
+        for(; it!= takenMask.end(); it++)
+            cout << "-" << *it;
+        cout << "]" << endl;
+        cout << setw(5) << ch.getFitness() << "before : ";
+        for(int i = 0; i < ch.getLength(); i++)
+            cout << ch.getVal(i);
+        cout << endl;
+        cout << setw(5) << trial.getFitness() << "after  : ";
+        for(int i = 0; i < trial.getLength(); i++)
+            cout << trial.getVal(i);
+        cout << endl << endl;
+        #endif
+        ////////
+
+        if (trial.getFitness() >= ch.getFitness()) {
+            /////////
+            #ifdef DEBUG
+            cout << "RM Fitness improve: " << trial.getFitness() - ch.getFitness();
+            vector<int>::iterator it = takenMask.begin();
+            cout << " Taken Mask: [" << *it;
+            it++;
+            for(; it!= takenMask.end(); it++)
+                cout << "-" << *it;
+            cout << "]" << endl;
+            cout << setw(5) << ch.getFitness() << "before : ";
+            for(int i = 0; i < ch.getLength(); i++)
+                cout << ch.getVal(i);
+            cout << endl;
+            cout << setw(5) << trial.getFitness() << "after  : ";
+            for(int i = 0; i < trial.getLength(); i++)
+                cout << trial.getVal(i);
+            cout << endl << endl;
+            #endif
+            /////////
+            if (ch.getUplink() == 0) {
+                // ch.setUplink(&trial);
+                Chromosome* newP = nextLayer->add_unique(&trial);
+                ch.setUplink(newP);
+            } else {
+                Chromosome newTrial = *(ch.getUplink());
+
+                size_t newSize = 1;
+                for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it) {
+                    newTrial.setVal(*it, trial.getVal(*it));
+
+                    ++newSize;
+                    if (newSize > ub) break;
+                }
+
+                if (newTrial.getFitness() >= ch.getUplink()->getFitness()) {
+                    pHash->erase(ch.getUplink()->getKey());
+                    (*pHash)[newTrial.getKey()] = newTrial.getFitness();
+
+                    *(ch.getUplink()) = newTrial; // should be saved in nextLayer...?
+                }
+            }
+            taken = true; // other conditions?
+
+            // pHash->erase(ch.getKey());
+            // (*pHash)[trial.getKey()] = trial.getFitness();
+
+            // taken = true;
+            // ch = trial;
+        }
+
+        if (taken) {
+            lastUB = ub;
+            break;
+        }
+    }
+
+    if (lastUB != 0) {
+        while (mask.size() > lastUB)
+            mask.pop_back();
+    }
+
+    return taken;
+
+}
+
+
+
 size_t DSMGA2::findSize(Chromosome& ch, list<int>& mask) const {
 
     DLLA candidate(nCurrent);
@@ -505,6 +689,30 @@ void DSMGA2::mixing() {
     }
 
 
+}
+
+void DSMGA2::pyramid_mixing() {
+    if (SELECTION)
+        selection();
+
+    //* really learn model
+    buildFastCounting();
+    buildGraph();
+
+    for (int i=0; i<ell; ++i)
+        findClique(i, masks[i]);
+
+    int repeat = (ell>50)? ell/50: 1;
+
+    for (int k=0; k<repeat; ++k) {
+
+        genOrderN();
+        for (int i=0; i<nCurrent; ++i) {
+            restrictedMixing(population[orderN[i]]);
+            if (Chromosome::hit) break;
+        }
+        if (Chromosome::hit) break;
+    }
 }
 
 inline bool DSMGA2::isInP(const Chromosome& ch) const {
@@ -677,11 +885,12 @@ void DSMGA2::tournamentSelection () {
 bool DSMGA2::add_unique (Chromosome* ch, size_t size) {
     if (size < 2) return false;
     else if (size & 1) size = (size >> 1) << 1;
-
+    
     for (size_t i = 0; i < size; ++i) { 
-        population.push_back(ch[i]);       
+        population.push_back(ch[i]);
         (*pHash)[ch[i].getKey()] = ch[i].getFitness();
     }
+    
 
     orderN.resize(nCurrent + size);
     selectionIndex.resize(nCurrent + size);
@@ -699,7 +908,133 @@ bool DSMGA2::add_unique (Chromosome* ch, size_t size) {
     return true;
 }
 
+Chromosome* DSMGA2::add_unique (Chromosome* ch) {
+    size_t size = 1;
+
+    population.push_back(*ch);
+    (*pHash)[ch->getKey()] = ch->getFitness();
+
+    orderN.resize(nCurrent + size);
+    selectionIndex.resize(nCurrent + size);
+
+    nCurrent += size;
+
+    for (int i = 0; i < ell; i++)
+        fastCounting[i].init(nCurrent);
+
+    if (GHC) {
+        for (int i=nCurrent - size; i < nCurrent; i++)
+            population[i].GHC();
+    }
+
+    return &(population.back());
+}
+
 void DSMGA2::setNextLayer(DSMGA2* _next) {
     assert(nextLayer == 0);
     nextLayer = _next;
+}
+
+bool DSMGA2::pyramid_BM(Chromosome& source, list<int>& mask, Chromosome& des) {
+    if (nextLayer == 0)
+        return false;
+
+    double diff = 0;
+    int cover = -1; // 0 means covering the lower one. 1 for the upper one, -1 for not covering
+    Chromosome trial(ell), trialUp(ell);
+    trial = des;
+    for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
+        trial.setVal(*it, source.getVal(*it));
+
+    diff = trial.getFitness() - des.getFitness();
+    if (diff > 0) {
+        cover = 0;
+    }
+
+    if (des.getUplink()) {
+        trialUp = (*des.getUplink());
+        
+        for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
+            trialUp.setVal(*it, source.getVal(*it));
+
+        if ((trialUp.getFitness() - des.getFitness() > diff && cover == 0) ||
+            trialUp.getFitness() > des.getFitness()) {
+            cover = 1;
+        }
+    }
+
+    if (cover == 0) {
+        (*pHash).erase(des.getKey());
+        (*pHash)[trial.getKey()] = trial.getFitness();
+        
+        if (des.getUplink() != 0)
+            *(des.getUplink()) = trial;
+        else {
+            Chromosome* newP = nextLayer->add_unique(&trial);
+            des.setUplink(newP);
+        }
+    }
+    else if (cover == 1) {
+        Chromosome* upLink = des.getUplink();
+        (*pHash).erase(upLink->getKey());
+        (*pHash)[trialUp.getKey()] = trialUp.getFitness();
+        (*upLink) = trialUp;
+    }
+    
+    return (cover != -1);
+}
+
+
+bool DSMGA2::pyramid_BM_Equal(Chromosome& source, list<int>& mask, Chromosome& des) {
+    double diff = 0;
+    int cover = -1; // 0 means covering the lower one. 1 for the upper one, -1 for not covering
+    Chromosome trial(ell), trialUp(ell);
+    trial = des;
+    for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
+        trial.setVal(*it, source.getVal(*it));
+
+    if (trial.getFitness() > des.getFitness()) {
+        cover = 0;
+        EQ = false;
+    }
+    
+    if (EQ && trial.getFitness() >= des.getFitness()) cover = 0; // Behaviour consistent
+
+    if (des.getUplink()) {
+        trialUp = (*des.getUplink());
+        
+        for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
+            trialUp.setVal(*it, source.getVal(*it));
+
+        if (cover == 0 && trialUp.getFitness() - des.getFitness() > diff) {
+            cover = 1;
+            EQ = false;
+        } else if (cover == -1 && trialUp.getFitness() > des.getFitness() ) {
+            cover = 1;
+            EQ = false;
+        } else if (cover == -1 && trialUp.getFitness() >= des.getFitness() ) {
+            cover = 1;
+            EQ = true;
+        }
+    }
+
+    if (cover == 0) {
+        (*pHash).erase(des.getKey());
+        (*pHash)[trial.getKey()] = trial.getFitness();
+        
+        if (des.getUplink() != 0)
+            *(des.getUplink()) = trial;
+        else {
+            des.setUplink(&trial);
+            nextLayer->add_unique(&trial, 1);
+        }
+    }
+    else if (cover == 1) {
+        Chromosome* upLink = des.getUplink();
+        (*pHash).erase(upLink->getKey());
+        (*pHash)[trialUp.getKey()] = trialUp.getFitness();
+        (*upLink) = trialUp;
+    }
+    
+    return (cover != -1);
 }
