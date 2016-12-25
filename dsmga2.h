@@ -37,7 +37,7 @@ class DSMGA2 {
         void backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
         void backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);
 
-        bool shouldTerminate () const;
+        bool shouldTerminate ();
 
 
         bool foundOptima ();

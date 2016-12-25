@@ -19,7 +19,7 @@ Pyramid::Pyramid(int ell, int fffff)
     Chromosome::hitnfe = 0;
     Chromosome::hit = false;
 
-    DSMGA2* init = new DSMGA2(ell, (ell << 1), -1, 10 * ell*ell/3, fffff, pHash);
+    DSMGA2* init = new DSMGA2(ell, (ell), -1, 100 * ell*ell, fffff, pHash);
     DSMGA2::PYRA = 1;
     layers.push_back(init);
 }
@@ -35,11 +35,34 @@ Pyramid::~Pyramid()
 }
 
 void Pyramid::doIt() {
-    cout << "doIt" << endl;
-    while (!shouldTerminate()) {
-        layers.front()->pyramid_oneRun();
+    // cout << "doIt" << endl;
+    // while (!shouldTerminate()) {
+    //     layers.front()->pyramid_oneRun();
 
-        layers.front()->showStatistics();
+    //     layers.front()->showStatistics();
+    // }
+    for (size_t i = 0, size = layers.size(); i < size; ++i) {
+        cout << "Layer: " << i << ", ";
+        layers[i]->showStatistics();
+    }
+    // add_one_layer();
+    // layers[0]->pyramid_oneRun();
+    while (!shouldTerminate()) {
+        // Chromosome* ch = new Chromosome[ell];
+        // for (int i = 0; i < ell; ++i) {
+        //     ch[i].initR(ell);
+        // }
+        // add_unique(ch, ell, 0);
+
+        add_one_layer();
+
+        for (size_t i = 0, size = layers.size() - 1; i < size; ++i) {
+            layers[i]->pyramid_oneRun();
+        }
+        for (size_t i = 0, size = layers.size(); i < size; ++i) {
+            cout << "Layer: " << i << ", ";
+            layers[i]->showStatistics();
+        }
     }
 }
 
@@ -55,14 +78,14 @@ bool Pyramid::add_unique (Chromosome *ch, size_t size, size_t numOfLayer)
 
 void Pyramid::add_one_layer()
 {
-    DSMGA2* newLayer = new DSMGA2(ell, (ell << 1), -1, ell*ell/3, fffff, pHash);
+    DSMGA2* newLayer = new DSMGA2(ell, (ell), -1, 100 * ell*ell, fffff, pHash);
 
     layers.back()->setNextLayer(newLayer);
 
     layers.push_back(newLayer);
 }
 
-bool Pyramid::shouldTerminate() const
+bool Pyramid::shouldTerminate()
 {
     bool term = false;
     for (size_t i = 0; !term && i < layers.size(); ++i) {

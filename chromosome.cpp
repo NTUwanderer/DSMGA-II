@@ -16,11 +16,14 @@ Chromosome::Chromosome () {
     lengthLong = 0;
 //    gene = NULL;
     evaluated = false;
+
+    uplink = 0;
 }
 
 Chromosome::Chromosome (int n_length) {
 //    gene = NULL;
     init (n_length);
+    uplink = 0;
 }
 
 

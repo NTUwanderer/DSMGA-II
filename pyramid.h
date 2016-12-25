@@ -29,7 +29,7 @@ class Pyramid
 
         void add_one_layer();
 
-        bool shouldTerminate() const;
+        bool shouldTerminate();
 };
 
 #endif

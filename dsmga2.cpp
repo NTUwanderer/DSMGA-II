@@ -105,6 +105,11 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
 
     nextLayer = 0;
     generation = 0;
+    
+    updateStatistics();
+    cout << "constructor: " << endl;
+    cout << "bestIndex: " << bestIndex << endl;
+    cout << "value: " << population[bestIndex].getFitness() << endl;
 }
 
 
@@ -177,10 +182,13 @@ void DSMGA2::oneRun (bool output) {
 }
 
 void DSMGA2::pyramid_oneRun () {
+    assert(nextLayer != 0);
+    nextLayer->showStatistics();
+
     if (CACHE)
         Chromosome::cache.clear();
 
-    mixing();
+    pyramid_mixing();
 
     double max = -INF;
     stFitness.reset ();
@@ -218,7 +226,7 @@ void DSMGA2::updateStatistics() {
     }
 }
 
-bool DSMGA2::shouldTerminate () const {
+bool DSMGA2::shouldTerminate () {
     bool
     termination = false;
 
@@ -233,12 +241,18 @@ bool DSMGA2::shouldTerminate () const {
     }
 
 
-    if (population[0].getMaxFitness() <= stFitness.getMax() )
+    if (population[0].getMaxFitness() <= stFitness.getMax() ) {
+        cout << "bestIndex: " << bestIndex << endl;
+        cout << "value: " << population[bestIndex].getFitness() << endl;
         termination = true;
+    }
 
 
-    if (stFitness.getMax() - EPSILON <= stFitness.getMean() )
+    if (stFitness.getMax() - EPSILON <= stFitness.getMean() ) {
+        cout << "bestIndex: " << bestIndex << endl;
+        cout << "value: " << population[bestIndex].getFitness() << endl;
         termination = true;
+    }
 
     return termination;
 
@@ -708,7 +722,7 @@ void DSMGA2::pyramid_mixing() {
 
         genOrderN();
         for (int i=0; i<nCurrent; ++i) {
-            restrictedMixing(population[orderN[i]]);
+            pyramid_restrictedMixing(population[orderN[i]]);
             if (Chromosome::hit) break;
         }
         if (Chromosome::hit) break;
