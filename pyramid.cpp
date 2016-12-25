@@ -78,7 +78,7 @@ bool Pyramid::add_unique (Chromosome *ch, size_t size, size_t numOfLayer)
 
 void Pyramid::add_one_layer()
 {
-    DSMGA2* newLayer = new DSMGA2(ell, (ell), -1, 100 * ell*ell, fffff, pHash);
+    DSMGA2* newLayer = new DSMGA2(ell, 0, -1, 100 * ell*ell, fffff, pHash);
 
     layers.back()->setNextLayer(newLayer);
 

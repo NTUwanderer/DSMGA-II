@@ -109,7 +109,8 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff,
     updateStatistics();
     cout << "constructor: " << endl;
     cout << "bestIndex: " << bestIndex << endl;
-    cout << "value: " << population[bestIndex].getFitness() << endl;
+    if (bestIndex != -1)
+        cout << "value: " << population[bestIndex].getFitness() << endl;
 }
 
 
@@ -590,10 +591,8 @@ bool DSMGA2::pyramid_restrictedMixing(Chromosome& ch, list<int>& mask) {
             cout << endl << endl;
             #endif
             /////////
-            if (ch.getUplink() == 0) {
-                // ch.setUplink(&trial);
-                Chromosome* newP = nextLayer->add_unique(&trial);
-                ch.setUplink(newP);
+            if (!(ch.hasUplink())) {
+                ch.setUplink(nextLayer->add_unique(trial));
             } else {
                 Chromosome newTrial = *(ch.getUplink());
 
@@ -922,11 +921,32 @@ bool DSMGA2::add_unique (Chromosome* ch, size_t size) {
     return true;
 }
 
-Chromosome* DSMGA2::add_unique (Chromosome* ch) {
+// Chromosome* DSMGA2::add_unique (Chromosome* ch) {
+//     size_t size = 1;
+
+//     population.push_back(*ch);
+//     (*pHash)[ch->getKey()] = ch->getFitness();
+
+//     orderN.resize(nCurrent + size);
+//     selectionIndex.resize(nCurrent + size);
+
+//     nCurrent += size;
+
+//     for (int i = 0; i < ell; i++)
+//         fastCounting[i].init(nCurrent);
+
+//     if (GHC) {
+//         for (int i=nCurrent - size; i < nCurrent; i++)
+//             population[i].GHC();
+//     }
+
+//     return &(population.back());
+// }
+vector<Chromosome>::iterator DSMGA2::add_unique (Chromosome& ch) {
     size_t size = 1;
 
-    population.push_back(*ch);
-    (*pHash)[ch->getKey()] = ch->getFitness();
+    population.push_back(ch);
+    (*pHash)[ch.getKey()] = ch.getFitness();
 
     orderN.resize(nCurrent + size);
     selectionIndex.resize(nCurrent + size);
@@ -941,7 +961,7 @@ Chromosome* DSMGA2::add_unique (Chromosome* ch) {
             population[i].GHC();
     }
 
-    return &(population.back());
+    return --(population.end());
 }
 
 void DSMGA2::setNextLayer(DSMGA2* _next) {
@@ -965,8 +985,8 @@ bool DSMGA2::pyramid_BM(Chromosome& source, list<int>& mask, Chromosome& des) {
         cover = 0;
     }
 
-    if (des.getUplink()) {
-        trialUp = (*des.getUplink());
+    if (des.hasUplink()) {
+        trialUp = *(des.getUplink());
         
         for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
             trialUp.setVal(*it, source.getVal(*it));
@@ -981,15 +1001,15 @@ bool DSMGA2::pyramid_BM(Chromosome& source, list<int>& mask, Chromosome& des) {
         (*pHash).erase(des.getKey());
         (*pHash)[trial.getKey()] = trial.getFitness();
         
-        if (des.getUplink() != 0)
+        if (des.hasUplink())
             *(des.getUplink()) = trial;
         else {
-            Chromosome* newP = nextLayer->add_unique(&trial);
-            des.setUplink(newP);
+            // Chromosome* newP = nextLayer->add_unique(&trial);
+            des.setUplink(nextLayer->add_unique(trial));
         }
     }
     else if (cover == 1) {
-        Chromosome* upLink = des.getUplink();
+        vector<Chromosome>::iterator upLink = des.getUplink();
         (*pHash).erase(upLink->getKey());
         (*pHash)[trialUp.getKey()] = trialUp.getFitness();
         (*upLink) = trialUp;
@@ -1014,7 +1034,7 @@ bool DSMGA2::pyramid_BM_Equal(Chromosome& source, list<int>& mask, Chromosome& d
     
     if (EQ && trial.getFitness() >= des.getFitness()) cover = 0; // Behaviour consistent
 
-    if (des.getUplink()) {
+    if (des.hasUplink()) {
         trialUp = (*des.getUplink());
         
         for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
@@ -1036,15 +1056,14 @@ bool DSMGA2::pyramid_BM_Equal(Chromosome& source, list<int>& mask, Chromosome& d
         (*pHash).erase(des.getKey());
         (*pHash)[trial.getKey()] = trial.getFitness();
         
-        if (des.getUplink() != 0)
+        if (des.hasUplink())
             *(des.getUplink()) = trial;
         else {
-            des.setUplink(&trial);
-            nextLayer->add_unique(&trial, 1);
+            des.setUplink(nextLayer->add_unique(trial));
         }
     }
     else if (cover == 1) {
-        Chromosome* upLink = des.getUplink();
+        vector<Chromosome>::iterator upLink = des.getUplink();
         (*pHash).erase(upLink->getKey());
         (*pHash)[trialUp.getKey()] = trialUp.getFitness();
         (*upLink) = trialUp;

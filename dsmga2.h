@@ -110,7 +110,7 @@ class DSMGA2 {
         size_t findSize(Chromosome&, list<int>&, Chromosome&) const;
 
         bool add_unique(Chromosome*, size_t);
-        Chromosome* add_unique(Chromosome*);
+        vector<Chromosome>::iterator add_unique(Chromosome&);
 
         void updateStatistics();
 

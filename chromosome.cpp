@@ -17,15 +17,14 @@ Chromosome::Chromosome () {
 //    gene = NULL;
     evaluated = false;
 
-    uplink = 0;
+    _hasUplink = false;
 }
 
 Chromosome::Chromosome (int n_length) {
 //    gene = NULL;
     init (n_length);
-    uplink = 0;
+    _hasUplink = false;
 }
-
 
 Chromosome::~Chromosome () {
 //    if (gene != NULL) delete []gene;
@@ -226,6 +225,10 @@ Chromosome& Chromosome::operator= (const Chromosome& c) {
 
     gene = c.gene;
 //    memcpy(gene, c.gene, sizeof(long) * lengthLong);
+    _hasUplink = c._hasUplink;
+
+    if (_hasUplink)
+        uplink = c.uplink;
 
     return *this;
 }
@@ -412,10 +415,15 @@ double Chromosome::satFitness() const {
     return result;
 }
 
-Chromosome* Chromosome::getUplink() const {
+bool Chromosome::hasUplink() const {
+    return _hasUplink;
+}
+
+vector<Chromosome>::iterator Chromosome::getUplink() const {
     return uplink;
 }
 
-void Chromosome::setUplink(Chromosome* link) {
+void Chromosome::setUplink(vector<Chromosome>::iterator link) {
+    _hasUplink = true;
     uplink = link;
 }
