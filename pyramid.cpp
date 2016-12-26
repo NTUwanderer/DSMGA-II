@@ -19,7 +19,7 @@ Pyramid::Pyramid(int ell, int fffff)
     Chromosome::hitnfe = 0;
     Chromosome::hit = false;
 
-    DSMGA2* init = new DSMGA2(ell, (ell), -1, 100 * ell*ell, fffff, pHash);
+    DSMGA2* init = new DSMGA2(ell, (ell << 1), -1, 10000 * ell*ell, fffff, pHash);
     DSMGA2::PYRA = 1;
     layers.push_back(init);
 }
@@ -41,10 +41,7 @@ void Pyramid::doIt() {
 
     //     layers.front()->showStatistics();
     // }
-    for (size_t i = 0, size = layers.size(); i < size; ++i) {
-        cout << "Layer: " << i << ", ";
-        layers[i]->showStatistics();
-    }
+    
     // add_one_layer();
     // layers[0]->pyramid_oneRun();
     while (!shouldTerminate()) {
@@ -57,6 +54,7 @@ void Pyramid::doIt() {
         add_one_layer();
 
         for (size_t i = 0, size = layers.size() - 1; i < size; ++i) {
+            cout << "oneRun Layer: " << i << endl;
             layers[i]->pyramid_oneRun();
         }
         for (size_t i = 0, size = layers.size(); i < size; ++i) {
@@ -78,7 +76,7 @@ bool Pyramid::add_unique (Chromosome *ch, size_t size, size_t numOfLayer)
 
 void Pyramid::add_one_layer()
 {
-    DSMGA2* newLayer = new DSMGA2(ell, 0, -1, 100 * ell*ell, fffff, pHash);
+    DSMGA2* newLayer = new DSMGA2(ell, 0, -1, 10000 * ell*ell, fffff, pHash);
 
     layers.back()->setNextLayer(newLayer);
 

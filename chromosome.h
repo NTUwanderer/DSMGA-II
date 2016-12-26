@@ -120,9 +120,10 @@ public:
 
     double getMaxFitness () const;
 
+    void resetUplink();
     bool hasUplink() const;
-    vector<Chromosome>::iterator getUplink() const;
-    void setUplink(vector<Chromosome>::iterator);
+    int getUplink() const;
+    void setUplink(int);
 
 public:
     static int nfe;
@@ -141,7 +142,7 @@ protected:
     unsigned long key;
 
     bool _hasUplink;
-    vector<Chromosome>::iterator uplink;
+    int uplink;
 };
 
 

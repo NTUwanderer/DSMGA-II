@@ -18,12 +18,14 @@ Chromosome::Chromosome () {
     evaluated = false;
 
     _hasUplink = false;
+    uplink = -1;
 }
 
 Chromosome::Chromosome (int n_length) {
 //    gene = NULL;
     init (n_length);
     _hasUplink = false;
+    uplink = -1;
 }
 
 Chromosome::~Chromosome () {
@@ -415,15 +417,20 @@ double Chromosome::satFitness() const {
     return result;
 }
 
+void Chromosome::resetUplink() {
+    _hasUplink = false;
+    uplink = -1;
+}
+
 bool Chromosome::hasUplink() const {
     return _hasUplink;
 }
 
-vector<Chromosome>::iterator Chromosome::getUplink() const {
+int Chromosome::getUplink() const {
     return uplink;
 }
 
-void Chromosome::setUplink(vector<Chromosome>::iterator link) {
+void Chromosome::setUplink(int link) {
     _hasUplink = true;
     uplink = link;
 }
