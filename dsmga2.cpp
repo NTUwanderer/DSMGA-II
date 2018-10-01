@@ -169,18 +169,18 @@ void DSMGA2::showStatistics () {
 
 
 
-void DSMGA2::buildFastCounting() {
+void DSMGA2::buildFastCounting(const Chromosome& doner, const Chromosome& receiver) {
 
     if (SELECTION) {
         for (int i = 0; i < nCurrent; i++)
             for (int j = 0; j < ell; j++) {
-                fastCounting[j].setVal(i, population[selectionIndex[i]].getVal(j));
+                fastCounting[j].setVal(i, doner.getVal(j) == receiver.getVal(j) ? 0 : population[selectionIndex[i]].getVal(j));
             }
 
     } else {
         for (int i = 0; i < nCurrent; i++)
             for (int j = 0; j < ell; j++) {
-                fastCounting[j].setVal(i, population[i].getVal(j));
+                fastCounting[j].setVal(i, doner.getVal(j) == receiver.getVal(j) ? 0 : population[i].getVal(j));
             }
     }
 
@@ -387,8 +387,8 @@ void DSMGA2::mixing() {
         selection();
 
     //* really learn model
-    buildFastCounting();
-    buildGraph();
+    // buildFastCounting();
+    // buildGraph();
 
     for (int i=0; i<ell; ++i)
         findClique(i, masks[i]);
@@ -399,7 +399,16 @@ void DSMGA2::mixing() {
 
         genOrderN();
         for (int i=0; i<nCurrent; ++i) {
-            restrictedMixing(population[orderN[i]]);
+            Chromosome& receiver = population[orderN[i]];
+            int donerIndex = orderN[i];
+            while (donerIndex == orderN[i]) {
+                donerIndex = myRand.uniformInt(0, nCurrent-1);
+            }
+            Chromosome& doner = population[donerIndex];
+            buildFastCounting(doner, receiver);
+            buildGraph();
+            // restrictedMixing(population[orderN[i]]);
+            restrictedMixing(receiver);
             if (Chromosome::hit) break;
         }
         if (Chromosome::hit) break;
@@ -567,3 +576,8 @@ void DSMGA2::tournamentSelection () {
         selectionIndex[i] = winner;
     }
 }
+
+double DSMGA2::bestF () {
+    return population[bestIndex].getFitness();
+}
+

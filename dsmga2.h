@@ -50,6 +50,7 @@ public:
     void showStatistics ();
 
     bool isSteadyState ();
+    double bestF();
 
 //protected:
 public:
@@ -85,7 +86,7 @@ public:
 
     void findClique(int startNode, list<int>& result);
 
-    void buildFastCounting();
+    void buildFastCounting(const Chromosome&, const Chromosome&);
     int countXOR(int, int) const;
     int countOne(int) const;
 
