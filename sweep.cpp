@@ -23,7 +23,6 @@ struct Record {
     double nfe;
     double gen;
     double nfe_std;
-
     int rmSuccess = 0;
     int rmFail = 0;
     int bmSuccess = 0;
@@ -215,7 +214,6 @@ int main (int argc, char *argv[]) {
                 stNFE.record(Chromosome::hitnfe);
                 stLS.record(Chromosome::lsnfe);
 
-
                 if (!ga.foundOptima()) {
 
                     foundOptima = false;
@@ -226,7 +224,6 @@ int main (int argc, char *argv[]) {
                     }
                     break;
                 }
-
                 addGaCnt(rec[i], ga);
 
                 if (SHOW_BISECTION) {
@@ -372,7 +369,6 @@ int main (int argc, char *argv[]) {
 
             if (SHOW_BISECTION) printf(" : %f \n", rec[2].nfe);
         }
-
 
         if (!foundOptima)
             rec[2].nfe = INF;
