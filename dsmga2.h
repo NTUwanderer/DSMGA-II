@@ -30,7 +30,7 @@ public:
 
     void buildGraph ();
     void mixing ();
-    void restrictedMixing(Chromosome&);
+    void restrictedMixing(Chromosome& receiver, Chromosome& doner);
     bool restrictedMixing(Chromosome& ch, list<int>& mask);
     void backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
     void backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);

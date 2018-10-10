@@ -221,9 +221,12 @@ int DSMGA2::countXOR(int x, int y) const {
 }
 
 
-void DSMGA2::restrictedMixing(Chromosome& ch) {
+void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner) {
 
     int r = myRand.uniformInt(0, ell-1);
+    while (ch.getVal(r) == doner.getVal(r)) {
+        r = myRand.uniformInt(0, ell-1);
+    }
 
     list<int> mask = masks[r];
 
@@ -261,6 +264,8 @@ void DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
     for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
         trial.setVal(*it, source.getVal(*it));
 
+    if (isInP(trial))
+        return;
     if (trial.getFitness() > des.getFitness()) {
         pHash.erase(des.getKey());
         pHash[trial.getKey()] = trial.getFitness();
@@ -277,6 +282,8 @@ void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
     for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
         trial.setVal(*it, source.getVal(*it));
 
+    if (isInP(trial))
+        return;
     if (trial.getFitness() > des.getFitness()) {
         pHash.erase(des.getKey());
         pHash[trial.getKey()] = trial.getFitness();
@@ -390,9 +397,6 @@ void DSMGA2::mixing() {
     // buildFastCounting();
     // buildGraph();
 
-    for (int i=0; i<ell; ++i)
-        findClique(i, masks[i]);
-
     int repeat = (ell>50)? ell/50: 1;
 
     for (int k=0; k<repeat; ++k) {
@@ -407,8 +411,12 @@ void DSMGA2::mixing() {
             Chromosome& doner = population[donerIndex];
             buildFastCounting(doner, receiver);
             buildGraph();
+
+            for (int i=0; i<ell; ++i)
+                findClique(i, masks[i]);
+
             // restrictedMixing(population[orderN[i]]);
-            restrictedMixing(receiver);
+            restrictedMixing(receiver, doner);
             if (Chromosome::hit) break;
         }
         if (Chromosome::hit) break;
