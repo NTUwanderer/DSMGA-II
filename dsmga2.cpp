@@ -261,7 +261,7 @@ int DSMGA2::countXOR(int x, int y) const {
 }
 
 
-void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner) {
+void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner, int& rec_GIdx) {
 
     int r = myRand.uniformInt(0, ell-1);
     while (ch.getVal(r) == doner.getVal(r)) {
@@ -280,25 +280,39 @@ void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner) {
 
 
     bool taken = restrictedMixing(ch, mask);
-    return;
+//    return;
 
     EQ = true;
     if (taken) {
 
+        int better = 0;
         genOrderN();
 
-        for (int i=0; i<nCurrent; ++i) {
+        for (auto &it: groups[rec_GIdx].chIndices){
 
             if (EQ)
-                backMixingE(ch, mask, population[orderN[i]]);
+                better += backMixingE(ch, mask, population[it.first]);
             else
-                backMixing(ch, mask, population[orderN[i]]);
+                better += backMixing(ch, mask, population[it.first]);
+        }
+
+        if (better >= groups[rec_GIdx].chIndices.size() / 2)
+        {
+            for (int j = 0; j < groups.size(); ++j)
+                if (j != rec_GIdx)
+                    for (auto &it: groups[j].chIndices)
+                    {
+                        if (EQ)
+                            backMixingE(ch, mask, population[it.first]);
+                        else
+                            backMixing(ch, mask, population[it.first]);
+                    }
         }
     }
 
 }
 
-void DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
+bool DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
 
     Chromosome trial(ell);
     trial = des;
@@ -307,20 +321,23 @@ void DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
 
     if (isInP(trial)) {
         if (trial.getFitness() > des.getFitness())
+        {
             des.deprecated = true;
+            return true;
+        }
 
-        return;
+        return false;
     }
     if (trial.getFitness() > des.getFitness()) {
         pHash.erase(des.getKey());
         pHash[trial.getKey()] = trial.getFitness();
         des = trial;
-        return;
+        return true;
     }
-
+    return false;
 }
 
-void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
+bool DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
 
     Chromosome trial(ell);
     trial = des;
@@ -329,9 +346,12 @@ void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
 
     if (isInP(trial)) {
         if (trial.getFitness() > des.getFitness())
+        {
             des.deprecated = true;
+            return true;
+        }
 
-        return;
+        return false;
     }
     if (trial.getFitness() > des.getFitness()) {
         pHash.erase(des.getKey());
@@ -339,7 +359,7 @@ void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
 
         EQ = false;
         des = trial;
-        return;
+        return true;
     }
 
     if (trial.getFitness() >= des.getFitness()) {
@@ -347,9 +367,11 @@ void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
         pHash[trial.getKey()] = trial.getFitness();
 
         des = trial;
-        return;
+        return true;
     }
+    
 
+    return false;
 }
 
 bool DSMGA2::restrictedMixing(Chromosome& ch, list<int>& mask) {
@@ -509,7 +531,7 @@ void DSMGA2::mixing() {
                 printf ("\n");
                 continue;
             }
-            restrictedMixing(receiver, doner);
+            restrictedMixing(receiver, doner, groupIndices[receiverIndex]);
             if (Chromosome::hit) break;
         }
         if (Chromosome::hit) break;

@@ -131,10 +131,10 @@ public:
 
     void buildGraph (const Chromosome&, const Chromosome&);
     void mixing ();
-    void restrictedMixing(Chromosome& ch, Chromosome& doner);
+    void restrictedMixing(Chromosome& ch, Chromosome& doner, int& rec_GIdx);
     bool restrictedMixing(Chromosome& ch, list<int>& mask);
-    void backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
-    void backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);
+    bool backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
+    bool backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);
 
     bool shouldTerminate ();
 
