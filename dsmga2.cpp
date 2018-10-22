@@ -17,6 +17,7 @@
 
 using namespace std;
 
+typedef pair<int, int> pii;
 
 DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff) {
 
@@ -36,6 +37,7 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     maxFe = n_maxFe;
 
     graph.init(ell);
+    curGraph.init(ell);
 
     bestIndex = -1;
     masks = new list<int>[ell];
@@ -46,6 +48,7 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     fastCounting = new FastCounting[ell];
 
     groupIndices = new int[nCurrent];
+    distances = new vector<pii>[nCurrent];
     // groupSize = 0;
     // groups = new Group[nCurrent];
 
@@ -56,6 +59,8 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     pHash.clear();
     for (int i=0; i<nCurrent; ++i) {
         population[i].initR(ell);
+        if (Chromosome::hit)
+            continue;
         if (GHC)
             population[i].GHC();
         if (isInP(population[i])) {
@@ -63,6 +68,7 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
             continue;
         }
         double f = population[i].getFitness();
+        
         pHash[population[i].getKey()] = f;
     }
     // if (GHC) {
@@ -89,6 +95,7 @@ DSMGA2::~DSMGA2 () {
     delete []population;
     delete []fastCounting;
     delete []groupIndices;
+    delete []distances;
 }
 
 
@@ -125,6 +132,7 @@ void DSMGA2::oneRun (bool output) {
 
     mixing();
 
+    findMajorities();
 
     double max = -INF;
     stFitness.reset ();
@@ -268,7 +276,9 @@ void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner, int& rec_GIdx) 
         r = myRand.uniformInt(0, ell-1);
     }
 
-    list<int> mask = masks[r];
+    // list<int> mask = masks[r];
+    list<int> mask;
+    findClique(r, mask, doner, ch);
 
     size_t size = findSize(ch, mask);
     if (size > (size_t)ell/2)
@@ -473,17 +483,17 @@ void DSMGA2::mixing() {
 
     //* really learn model
     buildFastCounting();
-    // buildGraph();
+    buildGraph();
 
     int repeat = (ell>50)? ell/50: 1;
 
     for (int k=0; k<repeat; ++k) {
 
-        genOrderN();
-        // tournamentSelection();
+        // genOrderN();
+        tournamentSelection();
         for (int i=0; i<nCurrent; ++i) {
-            int receiverIndex = orderN[i];
-            // int receiverIndex = selectionIndex[i];
+            // int receiverIndex = orderN[i];
+            int receiverIndex = selectionIndex[i];
             Chromosome& receiver = population[receiverIndex];
             // Chromosome& receiver = population[selectionIndex[i]];
 
@@ -514,16 +524,10 @@ void DSMGA2::mixing() {
             }
 
             Chromosome& doner = population[donerIndex];
-            // buildFastCounting(doner, receiver);
-            buildGraph(doner, receiver);
-            for (int i=0; i<ell; ++i) {
-                if (receiver.getVal(i) != doner.getVal(i))
-                    findClique(i, masks[i]);
-            }
 
             // restrictedMixing(population[orderN[i]]);
             if (receiver == doner) {
-                printf ("origGInd: %i, donerGInd: %i, groupSize: %i, group[0] size: %i\n", origGInd, donerGInd, groups.size(), groups[0].chIndices.size());
+                printf ("origGInd: %i, donerGInd: %i, groupSize: %lu, group[0] size: %lu\n", origGInd, donerGInd, groups.size(), groups[0].chIndices.size());
                 printf ("rec: %i: %lu, doner: %i: %lu\n", receiverIndex, receiver.getKey(), donerIndex, doner.getKey());
                 receiver.printOut();
                 printf ("\n");
@@ -531,6 +535,13 @@ void DSMGA2::mixing() {
                 printf ("\n");
                 continue;
             }
+            // buildFastCounting(doner, receiver);
+            buildGraph(doner, receiver);
+            // for (int i=0; i<ell; ++i) {
+            //     if (receiver.getVal(i) != doner.getVal(i)) {
+            //         findClique(i, masks[i], doner, receiver);
+            //     }
+            // }
             restrictedMixing(receiver, doner, groupIndices[receiverIndex]);
             if (Chromosome::hit) break;
         }
@@ -556,6 +567,18 @@ inline void DSMGA2::genOrderELL() {
 
 void DSMGA2::buildGraph(const Chromosome& doner, const Chromosome& receiver) {
 
+    for (int i=0; i<ell; ++i) {
+        for (int j=i+1; j<ell; ++j) {
+            if (doner.getVal(i) == receiver.getVal(i) || doner.getVal(j) == receiver.getVal(j)) {
+                curGraph.write(i, j, 0.0);
+            } else {
+                curGraph.write(i, j, graph(i, j));
+            }
+        }
+    }
+}
+void DSMGA2::buildGraph() {
+
     int *one = new int [ell];
     for (int i=0; i<ell; ++i) {
         one[i] = countOne(i);
@@ -564,10 +587,6 @@ void DSMGA2::buildGraph(const Chromosome& doner, const Chromosome& receiver) {
     for (int i=0; i<ell; ++i) {
 
         for (int j=i+1; j<ell; ++j) {
-            if (doner.getVal(i) == receiver.getVal(i) || doner.getVal(j) == receiver.getVal(j)) {
-                graph.write(i, j, 0.0);
-                continue;
-            }
 
             int n00, n01, n10, n11;
             int nX =  countXOR(i, j);
@@ -594,7 +613,7 @@ void DSMGA2::buildGraph(const Chromosome& doner, const Chromosome& receiver) {
 }
 
 // from 1 to ell, pick by max edge
-void DSMGA2::findClique(int startNode, list<int>& result) {
+void DSMGA2::findClique(int startNode, list<int>& result, const Chromosome& doner, const Chromosome& receiver) {
 
 
     result.clear();
@@ -604,14 +623,15 @@ void DSMGA2::findClique(int startNode, list<int>& result) {
     for (int i=0; i<ell; ++i) {
         if (orderELL[i]==startNode)
             result.push_back(orderELL[i]);
-        else
+        else if (doner.getVal(orderELL[i]) != receiver.getVal(orderELL[i]))
+        // else
             rest.insert(orderELL[i]);
     }
 
     double *connection = new double[ell];
 
     for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter)
-        connection[*iter] = graph(startNode, *iter);
+        connection[*iter] = curGraph(startNode, *iter);
 
     while (!rest.isEmpty()) {
 
@@ -628,7 +648,7 @@ void DSMGA2::findClique(int startNode, list<int>& result) {
         result.push_back(index);
 
         for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter)
-            connection[*iter] += graph(index, *iter);
+            connection[*iter] += curGraph(index, *iter);
     }
 
 
@@ -706,5 +726,41 @@ void DSMGA2::tournamentSelection () {
 
 double DSMGA2::bestF () {
     return population[bestIndex].getFitness();
+}
+
+int DSMGA2::distance(const Chromosome& ch1, const Chromosome& ch2) const {
+    int d = 0;
+    for (int i = 0; i < ell; ++i) {
+        if (ch1.getVal(i) != ch2.getVal(i))
+            ++d;
+    }
+    return d;
+}
+
+void DSMGA2::findMajorities() {
+
+    for (int i = 0; i < nCurrent; ++i) {
+        distances[i].reserve(nCurrent-1);
+        distances[i].push_back(make_pair(0, i));
+        for (int j = 0; j < nCurrent; ++j) {
+            if (j == i)
+                continue;
+
+            distances[i].push_back(make_pair(distance(population[i], population[j]), j));
+        }
+        sort(distances[i].begin(), distances[i].end());
+        Group group(ell);
+        group.add(distances[i][0].second, population[distances[i][0].second]);
+        int j = 0;
+        for (; j + 2 < nCurrent; j+=2) {
+            int index1 = distances[i][j+1].second;
+            int index2 = distances[i][j+2].second;
+            group.add(index1, population[index1]);
+            group.add(index2, population[index2]);
+            if (!(group.getInstance() == population[i]))
+                break;
+        }
+        distances[i].resize(max(j+1, nCurrent));
+    }
 }
 

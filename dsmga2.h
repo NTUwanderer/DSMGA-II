@@ -17,6 +17,9 @@
 #include "fastcounting.h"
 
 
+using namespace std;
+
+typedef pair<int, int> pii;
 
 class Group {
 public:
@@ -129,6 +132,7 @@ public:
     void oneRun (bool output = true);
     int doIt (bool output = true);
 
+    void buildGraph ();
     void buildGraph (const Chromosome&, const Chromosome&);
     void mixing ();
     void restrictedMixing(Chromosome& ch, Chromosome& doner, int& rec_GIdx);
@@ -180,6 +184,7 @@ public:
     FastCounting* fastCounting;
 
     TriMatrix<double> graph;
+    TriMatrix<double> curGraph;
 
     double previousFitnessMean;
     Statistics stFitness;
@@ -188,7 +193,7 @@ public:
     double computeMI(double, double, double, double) const;
 
 
-    void findClique(int startNode, list<int>& result);
+    void findClique(int startNode, list<int>& result, const Chromosome& doner, const Chromosome& receiver);
 
     void buildGroup();
     int* groupIndices;
@@ -199,6 +204,10 @@ public:
     size_t findSize(Chromosome&, list<int>&) const;
     size_t findSize(Chromosome&, list<int>&, Chromosome&) const;
 
+    int distance(const Chromosome& ch1, const Chromosome& ch2) const;
+
+    vector<pii>* distances;
+    void findMajorities();
 
 };
 
