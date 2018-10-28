@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <string>
 
 #include "statistics.h"
 #include "dsmga2.h"
@@ -21,17 +22,38 @@ struct Record {
     int n;
     double nfe;
     double gen;
+    double nfe_std;
 };
 
 
+bool parseLine(string line, int popu, bool& foundOptima, double& nfe) {
+    int pos = line.find("]");
+    if (pos == -1)
+        return false;
+    if (to_string(popu) != line.substr(1, pos - 1))
+        return false;
+
+    int firstColon = line.find(":");
+    if (firstColon == -1)
+        return false;
+    int secondColon = line.find(":", firstColon + 2);
+    if (secondColon == -1)
+        return false;
+
+    foundOptima = line[secondColon - 2];
+    nfe = stod(line.substr(secondColon + 2));
+
+    return true;
+}
 
 int main (int argc, char *argv[]) {
 
     if (argc != 4 && argc!=5 && argc !=6 && argc != 7) {
-        printf ("sweep ell numConvergence function(0~3)\n");
+        printf ("sweep ell numConvergence function(0~3, 7, 8)\n");
         printf ("sweep ell numConvergence 4 [step #] [nk problem #]\n");
         printf ("sweep ell numConvergence 5 [spin problem #]\n");
         printf ("sweep ell numConvergence 6 [sat problem #]\n");
+        printf ("sweep ell numConvergence 9 [mkp problem #]\n");
         printf ("function: \n");
         printf ("     ONEMAX:  0\n");
         printf ("     MK    :  1\n");
@@ -40,6 +62,8 @@ int main (int argc, char *argv[]) {
         printf ("     NK    :  4\n");
         printf ("     SPIN  :  5\n");
         printf ("     SAT   :  6\n");
+        printf ("     L_FTRAP  : 7\n");
+        printf ("     L_2FTRAP : 8\n");
         return -1;
     }
 
@@ -51,6 +75,7 @@ int main (int argc, char *argv[]) {
     int neighborNum = 0;
     int stepNum = 0;
 
+    printf (" \n");
 
     if (fffff == 4) {
         neighborNum = 4;
@@ -58,7 +83,7 @@ int main (int argc, char *argv[]) {
         problemNum = atoi (argv[5]);
     }
 
-    if (fffff == 5 || fffff == 6) {
+    if (fffff == 5 || fffff == 6 || fffff == 9) {
         problemNum = atoi (argv[4]);
     }
 
@@ -67,7 +92,7 @@ int main (int argc, char *argv[]) {
 
 
     // for debug
-    // myRand.seed(123);
+    // myRand.seed(2);
 
 
     Statistics st;
@@ -75,11 +100,25 @@ int main (int argc, char *argv[]) {
     Statistics stGen, stLS, stNFE;
 
 
+    string line;
+    ifstream record;
+    bool failLoad = false;
     if (fffff == 5) {
 	char filename[200];
         sprintf(filename, "./SPIN/%d/%d_%d",ell, ell, problemNum);
         if (SHOW_BISECTION) printf("Loading: %s\n", filename);
         loadSPIN(filename, &mySpinGlassParams);
+
+        if (argc > 5) {
+            record.open(argv[5], ifstream::in);
+            while (record.good()) {
+                getline(record, line);
+                if (line == "Bisection phase 1")
+                    break;
+            }
+        } else {
+            failLoad = true;
+        }
     }
 
     if (fffff == 4) {
@@ -96,9 +135,17 @@ int main (int argc, char *argv[]) {
         sprintf(filename, "./SAT/uf%d/uf%d-0%d.cnf",ell,ell,problemNum);
         if (SHOW_BISECTION) printf("Loading: %s\n", filename);
         loadSAT(filename, &mySAT);
+
+        if (argc > 5) {
+            record.open(argv[5], ifstream::in);
+            while (true) {
+                getline(record, line);
+                if (line == "Bisection phase 1")
+                    break;
+            }
+        }
     }
-
-
+    
     bool foundOptima;
     Record rec[3];
     rec[0].n = nInitial;
@@ -108,56 +155,70 @@ int main (int argc, char *argv[]) {
     int popu;
     Record q1, q3;
 
-    if (SHOW_BISECTION) printf("Bisection phase 1\n");
+    if (SHOW_BISECTION && (!record.is_open()) && !failLoad) printf("Bisection phase 1\n");
+    fflush(NULL);
 
     for (int i=0; i<3; ++i) {
         popu = rec[i].n;
 
-        if (SHOW_BISECTION) printf("[%d]: ", popu);
+        bool loaded = false;
+        if (record.is_open() && !failLoad) {
+            getline(record, line);
 
-        foundOptima = true;
+            loaded = parseLine(line, popu, foundOptima, rec[i].nfe);
+        } 
+        if (!loaded) {
+            failLoad = true;
+            if (SHOW_BISECTION) printf("[%d]: ", popu);
 
-        stGen.reset();
-        stNFE.reset();
-        stLS.reset();
+            foundOptima = true;
 
-        for (int j=0; j<numConvergence; j++) {
+            stGen.reset();
+            stNFE.reset();
+            stLS.reset();
 
-            DSMGA2 ga(ell, popu, MAX_GEN, -1, fffff);
-            ga.doIt(false);
+            for (int j=0; j<numConvergence; j++) {
 
-            stGen.record(ga.getGeneration());
-            stNFE.record(Chromosome::hitnfe);
-            stLS.record(Chromosome::lsnfe);
+                DSMGA2 ga(ell, popu, MAX_GEN, -1, fffff);
+                ga.doIt(false);
+
+                stGen.record(ga.getGeneration());
+                stNFE.record(Chromosome::hitnfe);
+                stLS.record(Chromosome::lsnfe);
 
 
-            if (!ga.foundOptima()) {
+                if (!ga.foundOptima()) {
 
-                foundOptima = false;
+                    foundOptima = false;
+
+                    if (SHOW_BISECTION) {
+                        printf("-");
+                        fflush(NULL);
+                    }
+                    break;
+                }
 
                 if (SHOW_BISECTION) {
-                    printf("-");
+                    printf("+");
                     fflush(NULL);
                 }
-                break;
             }
 
-            if (SHOW_BISECTION) {
-                printf("+");
-                fflush(NULL);
+
+            rec[i].gen = stGen.getMean();
+
+            if (!foundOptima)
+                rec[i].nfe = INF;
+            else {
+                rec[i].nfe = stNFE.getMean();
+                rec[i].nfe_std = stNFE.getStdev();
             }
+
+            if (SHOW_BISECTION) printf(" : %f \n", rec[i].nfe);
         }
-
-
-        rec[i].gen = stGen.getMean();
 
         if (!foundOptima)
             rec[i].nfe = INF;
-        else
-            rec[i].nfe = stNFE.getMean();
-
-        if (SHOW_BISECTION) printf(" : %f \n", rec[i].nfe);
-
     }
 
     while (rec[0].nfe < rec[1].nfe  && ((rec[2].n-rec[0].n)*20 > rec[1].n)) {
@@ -201,11 +262,12 @@ int main (int argc, char *argv[]) {
 
         if (!foundOptima)
             rec[1].nfe = INF;
-        else
+        else {
             rec[1].nfe = stNFE.getMean();
+            rec[1].nfe_std = stNFE.getStdev();
+        }
 
         if (SHOW_BISECTION) printf(" : %f \n", rec[1].nfe);
-
     }
 
 
@@ -213,144 +275,193 @@ int main (int argc, char *argv[]) {
 
         popu = rec[2].n + step;
 
-        if (SHOW_BISECTION) printf("[%d]: ", popu);
-
-        foundOptima = true;
-
-        stGen.reset();
-        stNFE.reset();
-        stLS.reset();
-
-        for (int j=0; j<numConvergence; j++) {
-
-            DSMGA2 ga(ell, popu, MAX_GEN, -1, fffff);
-            ga.doIt(false);
-
-            stGen.record(ga.getGeneration());
-            stNFE.record(Chromosome::hitnfe);
-            stLS.record(Chromosome::lsnfe);
-
-
-            if (!ga.foundOptima()) {
-
-                foundOptima = false;
-
-                if (SHOW_BISECTION) {
-                    printf("-");
-                    fflush(NULL);
-                }
-                break;
-            }
-
-            if (SHOW_BISECTION) {
-                printf("+");
-                fflush(NULL);
-            }
-        }
-
-
         rec[0] = rec[1];
         rec[1] = rec[2];
         rec[2].n = popu;
-        rec[2].gen = stGen.getMean();
+
+        bool loaded = false;
+        if (record.is_open() && !failLoad) {
+            getline(record, line);
+
+            loaded = parseLine(line, popu, foundOptima, rec[2].nfe);
+        } 
+
+        if (!loaded) {
+            failLoad = true;
+
+            if (SHOW_BISECTION) printf("[%d]: ", popu);
+
+            foundOptima = true;
+
+            stGen.reset();
+            stNFE.reset();
+            stLS.reset();
+
+            for (int j=0; j<numConvergence; j++) {
+
+                DSMGA2 ga(ell, popu, MAX_GEN, -1, fffff);
+                ga.doIt(false);
+
+                stGen.record(ga.getGeneration());
+                stNFE.record(Chromosome::hitnfe);
+                stLS.record(Chromosome::lsnfe);
+
+
+                if (!ga.foundOptima()) {
+
+                    foundOptima = false;
+
+                    if (SHOW_BISECTION) {
+                        printf("-");
+                        fflush(NULL);
+                    }
+                    break;
+                }
+
+                if (SHOW_BISECTION) {
+                    printf("+");
+                    fflush(NULL);
+                }
+            }
+
+            rec[2].gen = stGen.getMean();
+
+            if (!foundOptima)
+                rec[2].nfe = INF;
+            else {
+                rec[2].nfe = stNFE.getMean();
+                rec[2].nfe_std = stNFE.getStdev();
+            }
+
+            if (SHOW_BISECTION) printf(" : %f \n", rec[2].nfe);
+        }
+
 
         if (!foundOptima)
             rec[2].nfe = INF;
-        else
-            rec[2].nfe = stNFE.getMean();
-
-        if (SHOW_BISECTION) printf(" : %f \n", rec[2].nfe);
-
     }
 
 
-    if (SHOW_BISECTION) printf("Bisection phase 2\n");
+    if (record.is_open())
+        getline(record, line);
+
+    if (SHOW_BISECTION && (!record.is_open() || !record.good())) printf("Bisection phase 2\n");
 
     while ( ((rec[2].n-rec[0].n)*20 > rec[1].n) && (rec[2].n>rec[1].n+1) && (rec[1].n>rec[0].n+1)) {
 
         q1.n = (rec[0].n + rec[1].n) / 2;
 
-        if (SHOW_BISECTION) printf("[%d]: ", q1.n);
+        bool loaded = false;
+        if (record.is_open() && !failLoad) {
+            getline(record, line);
 
-        foundOptima = true;
+            loaded = parseLine(line, q1.n, foundOptima, q1.nfe);
+        } 
 
-        for (int j=0; j<numConvergence; j++) {
+        if (!loaded) {
+            failLoad = true;
 
-            DSMGA2 ga(ell, q1.n, MAX_GEN, -1, fffff);
-            ga.doIt(false);
+            if (SHOW_BISECTION) printf("[%d]: ", q1.n);
 
-            if (!ga.foundOptima()) {
-                foundOptima = false;
+            foundOptima = true;
+
+            for (int j=0; j<numConvergence; j++) {
+
+                DSMGA2 ga(ell, q1.n, MAX_GEN, -1, fffff);
+                ga.doIt(false);
+
+                if (!ga.foundOptima()) {
+                    foundOptima = false;
+                    if (SHOW_BISECTION) {
+                        printf("-");
+                        fflush(NULL);
+                    }
+                    break;
+                }
                 if (SHOW_BISECTION) {
-                    printf("-");
+                    printf("+");
                     fflush(NULL);
                 }
-                break;
+                if (j==0) {
+                    stGen.reset();
+                    stLS.reset();
+                    stNFE.reset();
+                }
+                stGen.record(ga.getGeneration());
+                stNFE.record(Chromosome::hitnfe);
+                stLS.record(Chromosome::lsnfe);
             }
-            if (SHOW_BISECTION) {
-                printf("+");
-                fflush(NULL);
+
+            q1.gen = stGen.getMean();
+            if (foundOptima) {
+                q1.nfe = stNFE.getMean();
+                q1.nfe_std = stNFE.getStdev();
             }
-            if (j==0) {
-                stGen.reset();
-                stLS.reset();
-                stNFE.reset();
-            }
-            stGen.record(ga.getGeneration());
-            stNFE.record(Chromosome::hitnfe);
-            stLS.record(Chromosome::lsnfe);
+            else
+                q1.nfe = INF;
+
+
+            if (SHOW_BISECTION) printf(" : %f \n", q1.nfe);
+
         }
 
-        q1.gen = stGen.getMean();
-        if (foundOptima)
-            q1.nfe = stNFE.getMean();
-        else
+        if (!foundOptima)
             q1.nfe = INF;
-
-
-        if (SHOW_BISECTION) printf(" : %f \n", q1.nfe);
-
 
         q3.n = (rec[1].n + rec[2].n) / 2;
 
-        if (SHOW_BISECTION) printf("[%d]: ", q3.n);
+        loaded = false;
+        if (record.is_open() && !failLoad) {
+            getline(record, line);
 
-        foundOptima = true;
+            loaded = parseLine(line, q3.n, foundOptima, q3.nfe);
+        } 
 
-        for (int j=0; j<numConvergence; j++) {
+        if (!loaded) {
+            failLoad = true;
 
-            DSMGA2 ga(ell, q3.n, MAX_GEN, -1, fffff);
-            ga.doIt(false);
+            if (SHOW_BISECTION) printf("[%d]: ", q3.n);
 
-            if (!ga.foundOptima()) {
-                foundOptima = false;
+            foundOptima = true;
+
+            for (int j=0; j<numConvergence; j++) {
+
+                DSMGA2 ga(ell, q3.n, MAX_GEN, -1, fffff);
+                ga.doIt(false);
+
+                if (!ga.foundOptima()) {
+                    foundOptima = false;
+                    if (SHOW_BISECTION) {
+                        printf("-");
+                        fflush(NULL);
+                    }
+                    break;
+                }
                 if (SHOW_BISECTION) {
-                    printf("-");
+                    printf("+");
                     fflush(NULL);
                 }
-                break;
+                if (j==0) {
+                    stGen.reset();
+                    stLS.reset();
+                    stNFE.reset();
+                }
+                stGen.record(ga.getGeneration());
+                stNFE.record(Chromosome::hitnfe);
+                stLS.record(Chromosome::lsnfe);
             }
-            if (SHOW_BISECTION) {
-                printf("+");
-                fflush(NULL);
-            }
-            if (j==0) {
-                stGen.reset();
-                stLS.reset();
-                stNFE.reset();
-            }
-            stGen.record(ga.getGeneration());
-            stNFE.record(Chromosome::hitnfe);
-            stLS.record(Chromosome::lsnfe);
+
+            q3.gen = stGen.getMean();
+            if (foundOptima) {
+                q3.nfe = stNFE.getMean();
+                q3.nfe_std = stNFE.getStdev();
+            } else
+                q3.nfe = INF;
+
+            if (SHOW_BISECTION) printf(" : %f \n", q3.nfe);
         }
-
-        q3.gen = stGen.getMean();
-        if (foundOptima) {
-            q3.nfe = stNFE.getMean();
-        } else
+        if (!foundOptima)
             q3.nfe = INF;
-
-        if (SHOW_BISECTION) printf(" : %f \n", q3.nfe);
 
         if (rec[1].nfe < q1.nfe && rec[1].nfe < q3.nfe) {
             rec[0] = q1;
@@ -372,6 +483,7 @@ int main (int argc, char *argv[]) {
     printf("population: %d\n", rec[1].n);
     printf("generation: %f\n", rec[1].gen);
     printf("NFE: %f\n", rec[1].nfe);
+    printf("N_std: %f\n", rec[1].nfe_std);
 
 
     return EXIT_SUCCESS;

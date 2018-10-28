@@ -20,8 +20,8 @@ int
 main (int argc, char *argv[]) {
 
 
-    if (argc != 9) {
-        printf ("DSMGA2 ell nInitial function maxGen maxFe repeat display rand_seed\n");
+    if (argc < 9) {
+        printf ("DSMGA2 ell nInitial function maxGen maxFe repeat display rand_seed s_num=1 nk_step=1\n");
         printf ("function: \n");
         printf ("     ONEMAX:  0\n");
         printf ("     MK    :  1\n");
@@ -42,12 +42,15 @@ main (int argc, char *argv[]) {
     int repeat = atoi (argv[6]); // how many time to repeat
     int display = atoi (argv[7]); // display each generation or not
     int rand_seed = atoi (argv[8]);  // rand seed
+	int s_num = argc > 9 ? atoi (argv[9]) : 1;
+	int nk_step = argc > 10 ? atoi (argv[10]) : 1;
 
 
     if (fffff == 4) {
 
         char filename[200];
-        sprintf(filename, "./NK_Instance/pnk%d_%d_%d_%d", ell, 4, 1, 1);
+        //sprintf(filename, "./NK_Instance/pnk%d_%d_%d_%d", ell, 4, 1, 1);
+        sprintf(filename, "./NK_Instance/pnk%d_%d_%d_%d", ell, 4, nk_step, s_num);
 
         if (SHOW_BISECTION) printf("Loading: %s\n", filename);
         FILE *fp = fopen(filename, "r");
@@ -57,14 +60,14 @@ main (int argc, char *argv[]) {
 
     if (fffff == 5) {
         char filename[200];
-        sprintf(filename, "./SPIN/%d/%d_%d",ell, ell, 1);
+        sprintf(filename, "./SPIN/%d/%d_%d", ell, ell, s_num);
         if (SHOW_BISECTION) printf("Loading: %s\n", filename);
         loadSPIN(filename, &mySpinGlassParams);
     }
 
     if (fffff == 6) {
         char filename[200];
-        sprintf(filename, "./SAT/uf%d/uf%d-0%d.cnf", ell, ell, 1);
+        sprintf(filename, "./SAT/uf%d/uf%d-0%d.cnf", ell, ell, s_num);
         if (SHOW_BISECTION) printf("Loading: %s\n", filename);
         loadSAT(filename, &mySAT);
     }
@@ -79,6 +82,7 @@ main (int argc, char *argv[]) {
     int usedGen;
 
     int failNum = 0;
+    double* bestFs = new double[repeat];
 
 
     for (i = 0; i < repeat; i++) {
@@ -90,6 +94,7 @@ main (int argc, char *argv[]) {
         else
             usedGen = ga.doIt (false);
 
+        bestFs[i] = ga.bestF();
 
         if (!ga.foundOptima()) {
             failNum++;
@@ -107,7 +112,17 @@ main (int argc, char *argv[]) {
 
     cout << endl;
     printf ("\n");
-    printf ("%f  %f  %f %d\n", stGen.getMean (), stFE.getMean(), stLSFE.getMean(), failNum);
+    printf ("Gen: %f\n", stGen.getMean ());
+    printf ("FailNum: %d\n", failNum);
+    printf ("LSNFE: %f\n", stLSFE.getMean());
+    printf ("NFE: %f\n", stFE.getMean());
+    printf ("NFE std: %f\n", stFE.getStdev());
+    printf ("Fs:");
+    for (int i = 0; i < repeat; ++i)
+        printf (" %f", bestFs[i]);
+    printf ("\n");
+
+    delete[] bestFs;
 
     if (fffff == 4) freeNKWAProblem(&nkwa);
 

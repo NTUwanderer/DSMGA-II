@@ -567,3 +567,8 @@ void DSMGA2::tournamentSelection () {
         selectionIndex[i] = winner;
     }
 }
+
+double DSMGA2::bestF () {
+    return population[bestIndex].getFitness();
+}
+
