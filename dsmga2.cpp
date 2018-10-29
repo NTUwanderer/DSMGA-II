@@ -7,7 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
-#include <queue>
+#include <stack>
 
 #include <iostream>
 #include "chromosome.h"
@@ -244,18 +244,18 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
 
     EQ = true;
     if (taken) {
-        queue<int> q;
+        stack<int> st;
         bool* used = new bool[nCurrent];
         for (int i = 0; i < nCurrent; ++i) {
             used[i] = false;
             if (ch == population[i]) {
-                q.push(i);
+                st.push(i);
                 used[i] = true;
             }
         }
-        while (!q.empty()) {
-            int index = q.front();
-            q.pop();
+        while (!st.empty()) {
+            int index = st.top();
+            st.pop();
             bool bmS = false;
             if (EQ)
                 bmS = backMixingE(ch, mask, population[index]);
@@ -266,7 +266,7 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
                 for (size_t j = 1; j < distances[index].size(); ++j) {
                     int nI = distances[index][j].second;
                     if (used[nI] == false) {
-                        q.push(nI);
+                        st.push(nI);
                         used[nI] = true;
                     }
                 }
