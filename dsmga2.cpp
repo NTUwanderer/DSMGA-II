@@ -48,6 +48,7 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     population = new Chromosome[nCurrent];
     fastCounting = new FastCounting[ell];
     distances = new vector<pii>[nCurrent];
+    revDist = new vector<pii>[nCurrent];
 
     for (int i = 0; i < ell; i++)
         fastCounting[i].init(nCurrent);
@@ -75,6 +76,7 @@ DSMGA2::~DSMGA2 () {
     delete []population;
     delete []fastCounting;
     delete []distances;
+    delete []revDist;
 }
 
 
@@ -263,8 +265,15 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
                 bmS = backMixing(ch, mask, population[index]);
 
             if (bmS) {
-                for (size_t j = 1; j < distances[index].size(); ++j) {
-                    int nI = distances[index][j].second;
+                // for (size_t j = 1; j < distances[index].size(); ++j) {
+                //     int nI = distances[index][j].second;
+                //     if (used[nI] == false) {
+                //         st.push(nI);
+                //         used[nI] = true;
+                //     }
+                // }
+                for (size_t j = 0; j < revDist[index].size(); ++j) {
+                    int nI = revDist[index][j].second;
                     if (used[nI] == false) {
                         st.push(nI);
                         used[nI] = true;
@@ -643,6 +652,14 @@ void DSMGA2::findMajorities() {
                 break;
         }
         distances[i].resize(max(j+1, nCurrent));
+        for (int j = 0; j < distances[i].size(); ++j) {
+            pii p = distances[i][j];
+            revDist[p.second].push_back(make_pair(p.first, i));
+        }
+    }
+    for (int i = 0; i < nCurrent; ++i) {
+        sort(revDist[i].begin(), revDist[i].end());
+
     }
 }
 

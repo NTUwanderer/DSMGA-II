@@ -201,6 +201,7 @@ public:
     int distance(const Chromosome& ch1, const Chromosome& ch2) const;
 
     vector<pii>* distances;
+    vector<pii>* revDist;
     void findMajorities();
 
 
