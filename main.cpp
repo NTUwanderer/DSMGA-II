@@ -15,7 +15,6 @@
 
 using namespace std;
 
-
 int
 main (int argc, char *argv[]) {
 
@@ -84,6 +83,10 @@ main (int argc, char *argv[]) {
     int failNum = 0;
     double* bestFs = new double[repeat];
 
+    int rmSuccess = 0;
+    int rmFail = 0;
+    int bmSuccess = 0;
+    int bmFail = 0;
 
     for (i = 0; i < repeat; i++) {
 
@@ -100,6 +103,11 @@ main (int argc, char *argv[]) {
             failNum++;
             printf ("-");
         } else {
+            rmSuccess += ga.rmSuccess;
+            rmFail += ga.rmFail;
+            bmSuccess += ga.bmSuccess;
+            bmFail += ga.bmFail;
+
             stFE.record (Chromosome::hitnfe);
             stLSFE.record (Chromosome::lsnfe);
             stGen.record (usedGen);
@@ -114,6 +122,8 @@ main (int argc, char *argv[]) {
     printf ("\n");
     printf ("Gen: %f\n", stGen.getMean ());
     printf ("FailNum: %d\n", failNum);
+    printf ("RM Success: %i:%i %.5f\%\n", rmSuccess, rmFail, (100.0 * rmSuccess / (rmSuccess + rmFail)));
+    printf ("BM Success: %i:%i %.5f\%\n", bmSuccess, bmFail, (100.0 * bmSuccess / (bmSuccess + bmFail)));
     printf ("LSNFE: %f\n", stLSFE.getMean());
     printf ("NFE: %f\n", stFE.getMean());
     printf ("NFE std: %f\n", stFE.getStdev());

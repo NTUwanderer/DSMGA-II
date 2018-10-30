@@ -47,6 +47,10 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     population = new Chromosome[nCurrent];
     fastCounting = new FastCounting[ell];
 
+    rmSuccess = 0;
+    rmFail = 0;
+    bmSuccess = 0;
+    bmFail = 0;
     groupIndices = new int[nCurrent];
     distances = new vector<pii>[nCurrent];
     // groupSize = 0;
@@ -290,6 +294,10 @@ void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner, int& rec_GIdx) 
 
 
     bool taken = restrictedMixing(ch, mask);
+    if (taken)
+        ++rmSuccess;
+    else
+        ++rmFail;
 //    return;
 
     EQ = true;
@@ -300,10 +308,17 @@ void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner, int& rec_GIdx) 
 
         for (auto &it: groups[rec_GIdx].chIndices){
 
+            bool bmS = false;
             if (EQ)
-                better += backMixingE(ch, mask, population[it.first]);
+                bmS = backMixingE(ch, mask, population[it.first]);
             else
-                better += backMixing(ch, mask, population[it.first]);
+                bmS = backMixing(ch, mask, population[it.first]);
+
+            better += bmS;
+            if (bmS)
+                ++bmSuccess;
+            else
+                ++bmFail;
         }
 
         if (better >= groups[rec_GIdx].chIndices.size() / 2)
@@ -740,6 +755,7 @@ int DSMGA2::distance(const Chromosome& ch1, const Chromosome& ch2) const {
 void DSMGA2::findMajorities() {
 
     for (int i = 0; i < nCurrent; ++i) {
+        distances[i].clear();
         distances[i].reserve(nCurrent-1);
         distances[i].push_back(make_pair(0, i));
         for (int j = 0; j < nCurrent; ++j) {

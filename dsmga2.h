@@ -103,7 +103,8 @@ public:
         return d;
     }
     Chromosome getInstance () const {
-        Chromosome ch(ell);
+        Chromosome ch;
+        ch.initR(ell);
 
         for (int i = 0; i < ell; ++i) {
             if (ellCount[i] > num/2)
@@ -176,6 +177,11 @@ public:
     int repeat;
     int generation;
     int bestIndex;
+
+    int rmSuccess;
+    int rmFail;
+    int bmSuccess;
+    int bmFail;
 
     int groupSize = 0;
     vector<Group> groups;
