@@ -280,6 +280,13 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
                         used[nI] = true;
                     }
                 }
+                for (size_t j = 0; j < distances[index].size(); ++j) {
+                    int nI = distances[index][j].second;
+                    if (used[nI] == false) {
+                        q.push(nI);
+                        used[nI] = true;
+                    }
+                }
             }
         }
         delete[] used;
