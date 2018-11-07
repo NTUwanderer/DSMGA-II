@@ -32,8 +32,8 @@ public:
     void mixing ();
     void restrictedMixing(Chromosome&);
     bool restrictedMixing(Chromosome& ch, list<int>& mask);
-    void backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
-    void backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);
+    bool backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
+    bool backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);
 
     bool shouldTerminate ();
 
@@ -71,6 +71,11 @@ public:
     int repeat;
     int generation;
     int bestIndex;
+
+    int rmSuccess;
+    int rmFail;
+    int bmSuccess;
+    int bmFail;
 
     Chromosome* population;
     FastCounting* fastCounting;
