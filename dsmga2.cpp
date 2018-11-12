@@ -49,6 +49,8 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     rmFail = 0;
     bmSuccess = 0;
     bmFail = 0;
+    groupIndices = new int[nCurrent];
+
     for (int i = 0; i < ell; i++)
         fastCounting[i].init(nCurrent);
 
@@ -56,13 +58,16 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     pHash.clear();
     for (int i=0; i<nCurrent; ++i) {
         population[i].initR(ell);
+        if (Chromosome::hit)
+            continue;
+        if (GHC)
+            population[i].GHC();
+        if (isInP(population[i])) {
+            --i;
+            continue;
+        }
         double f = population[i].getFitness();
         pHash[population[i].getKey()] = f;
-    }
-
-    if (GHC) {
-        for (int i=0; i < nCurrent; i++)
-            population[i].GHC();
     }
 }
 
@@ -74,6 +79,7 @@ DSMGA2::~DSMGA2 () {
     delete []selectionIndex;
     delete []population;
     delete []fastCounting;
+    delete []groupIndices;
 }
 
 
@@ -171,20 +177,41 @@ void DSMGA2::showStatistics () {
     fflush(NULL);
 }
 
+void DSMGA2::buildGroup() {
+    groups.clear();
+    for (int i = 0; i < nCurrent; ++i) {
+        bool flag = true;
+        for (size_t j = 0; j < groups.size(); ++j) {
+            if (groups[j].distance(population[i]) <= nCurrent / 10) {
+                groupIndices[i] = j;
+                groups[j].add(i, population[i]);
+                flag = false;
+                break;
+            }
+        }
+        if (flag) {
+            groupIndices[i] = groups.size();
+            groups.push_back(Group(ell));
+            groups.back().add(i, population[i]);
+        }
+    }
 
+    for (size_t j = 0; j < groups.size(); ++j)
+        groups[j].sortIndices();
+}
 
-void DSMGA2::buildFastCounting(const Chromosome& doner, const Chromosome& receiver) {
+void DSMGA2::buildFastCounting() {
 
     if (SELECTION) {
         for (int i = 0; i < nCurrent; i++)
             for (int j = 0; j < ell; j++) {
-                fastCounting[j].setVal(i, doner.getVal(j) == receiver.getVal(j) ? 0 : population[selectionIndex[i]].getVal(j));
+                fastCounting[j].setVal(i, population[selectionIndex[i]].getVal(j));
             }
 
     } else {
         for (int i = 0; i < nCurrent; i++)
             for (int j = 0; j < ell; j++) {
-                fastCounting[j].setVal(i, doner.getVal(j) == receiver.getVal(j) ? 0 : population[i].getVal(j));
+                fastCounting[j].setVal(i, population[i].getVal(j));
             }
     }
 
@@ -225,12 +252,16 @@ int DSMGA2::countXOR(int x, int y) const {
 }
 
 
-void DSMGA2::restrictedMixing(Chromosome& ch) {
+void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner, int rec_GIdx) {
 
     int r = myRand.uniformInt(0, ell-1);
+    while (ch.getVal(r) == doner.getVal(r)) {
+        r = myRand.uniformInt(0, ell-1);
+    }
 
     list<int> mask = masks[r];
 
+    findClique(r, mask);
     size_t size = findSize(ch, mask);
     if (size > (size_t)ell/2)
         size = ell/2;
@@ -238,6 +269,13 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
     // prune mask to exactly size
     while (mask.size() > size)
         mask.pop_back();
+
+    /*
+    for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it) {
+        printf ("%i ", *it);
+    }
+    printf ("\n");
+    */
 
 
     bool taken = restrictedMixing(ch, mask);
@@ -248,22 +286,36 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
 
     EQ = true;
     if (taken) {
-
+        size_t better = 0;
         genOrderN();
 
-        for (int i=0; i<nCurrent; ++i) {
+        for (auto &it: groups[rec_GIdx].chIndices) {
+
             bool bmS = false;
-
             if (EQ)
-                bmS = backMixingE(ch, mask, population[orderN[i]]);
+                bmS = backMixingE(ch, mask, population[it.first]);
             else
-                bmS = backMixing(ch, mask, population[orderN[i]]);
+                bmS = backMixing(ch, mask, population[it.first]);
 
+            better += bmS;
             if (bmS)
                 ++bmSuccess;
             else
                 ++bmFail;
         }
+
+        if (better >= groups[rec_GIdx].chIndices.size() / 2) {
+            for (size_t j = 0; j < groups.size(); ++j)
+                if (j != (size_t)rec_GIdx)
+                    for (auto &it: groups[j].chIndices)
+                    {
+                        if (EQ)
+                            backMixingE(ch, mask, population[it.first]);
+                        else
+                            backMixing(ch, mask, population[it.first]);
+                    }
+        }
+
     }
 
 }
@@ -275,6 +327,12 @@ bool DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
     for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
         trial.setVal(*it, source.getVal(*it));
 
+    if (isInP(trial)) {
+        if (trial.getFitness() > des.getFitness())
+            des.deprecated = true;
+
+        return false;
+    }
     if (trial.getFitness() > des.getFitness()) {
         pHash.erase(des.getKey());
         pHash[trial.getKey()] = trial.getFitness();
@@ -292,6 +350,12 @@ bool DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
     for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
         trial.setVal(*it, source.getVal(*it));
 
+    if (isInP(trial)) {
+        if (trial.getFitness() > des.getFitness())
+            des.deprecated = true;
+
+        return false;
+    }
     if (trial.getFitness() > des.getFitness()) {
         pHash.erase(des.getKey());
         pHash[trial.getKey()] = trial.getFitness();
@@ -331,7 +395,12 @@ bool DSMGA2::restrictedMixing(Chromosome& ch, list<int>& mask) {
             if (size > ub) break;
         }
 
-        if (isInP(trial)) break;
+        if (isInP(trial)) {
+            if (trial.getFitness() > ch.getFitness())
+                ch.deprecated = true;
+
+            break;
+        }
 
 
         if (trial.getFitness() >= ch.getFitness()) {
@@ -383,8 +452,6 @@ size_t DSMGA2::findSize(Chromosome& ch, list<int>& mask) const {
     }
 
     return size;
-
-
 }
 
 size_t DSMGA2::findSize(Chromosome& ch, list<int>& mask, Chromosome& ch2) const {
@@ -402,29 +469,66 @@ void DSMGA2::mixing() {
     if (SELECTION)
         selection();
 
-    //* really learn model
-    // buildFastCounting();
-    // buildGraph();
-
-    for (int i=0; i<ell; ++i)
-        findClique(i, masks[i]);
+    buildFastCounting();
 
     int repeat = (ell>50)? ell/50: 1;
 
     for (int k=0; k<repeat; ++k) {
 
-        genOrderN();
+        // genOrderN();
+        tournamentSelection();
         for (int i=0; i<nCurrent; ++i) {
-            Chromosome& receiver = population[orderN[i]];
-            int donerIndex = orderN[i];
-            while (donerIndex == orderN[i]) {
-                donerIndex = myRand.uniformInt(0, nCurrent-1);
+            // int receiverIndex = orderN[i];
+            int receiverIndex = selectionIndex[i];
+            Chromosome& receiver = population[receiverIndex];
+            // Chromosome& receiver = population[selectionIndex[i]];
+
+            // int donerIndex = receiverIndex;
+            // while (donerIndex == receiverIndex) {
+            //     donerIndex = myRand.uniformInt(0, nCurrent-1);
+            // }
+            // int donerIndex2 = orderN[i];
+            // while (donerIndex2 == orderN[i] || donerIndex2 == donerIndex) {
+            //     donerIndex2 = myRand.uniformInt(0, nCurrent-1);
+            // }
+            // if (population[donerIndex2].getFitness() > population[donerIndex].getFitness())
+            //     donerIndex = donerIndex2;
+
+            buildGroup();
+            int donerGInd = myRand.uniformInt(0, groups.size()-2);
+            int origGInd = donerGInd;
+            if (donerGInd == groupIndices[receiverIndex])
+                donerGInd = groups.size()-1;
+            int donerIndex = receiverIndex;
+            int failCount = 0, failThres = 10;
+            while (donerIndex == receiverIndex && failCount <= failThres) {
+                ++failCount;
+
+                int kthCh = myRand.uniformInt(0, max((int)(groups[donerGInd].chIndices.size() / 2 - 1), 0));
+
+                donerIndex = groups[donerGInd].chIndices[kthCh].first;
             }
+
             Chromosome& doner = population[donerIndex];
-            buildFastCounting(doner, receiver);
-            buildGraph();
+
             // restrictedMixing(population[orderN[i]]);
-            restrictedMixing(receiver);
+            if (receiver == doner) {
+                printf ("origGInd: %i, donerGInd: %i, groupSize: %lu, group[0] size: %lu\n", origGInd, donerGInd, groups.size(), groups[0].chIndices.size());
+                printf ("rec: %i: %lu, doner: %i: %lu\n", receiverIndex, receiver.getKey(), donerIndex, doner.getKey());
+                receiver.printOut();
+                printf ("\n");
+                doner.printOut();
+                printf ("\n");
+                continue;
+            }
+            // buildFastCounting(doner, receiver);
+            buildGraph(doner, receiver);
+            // for (int i=0; i<ell; ++i) {
+            //     if (receiver.getVal(i) != doner.getVal(i)) {
+            //         findClique(i, masks[i], doner, receiver);
+            //     }
+            // }
+            restrictedMixing(receiver, doner, groupIndices[receiverIndex]);
             if (Chromosome::hit) break;
         }
         if (Chromosome::hit) break;
@@ -447,7 +551,7 @@ inline void DSMGA2::genOrderELL() {
     myRand.uniformArray(orderELL, ell, 0, ell-1);
 }
 
-void DSMGA2::buildGraph() {
+void DSMGA2::buildGraph(const Chromosome& doner, const Chromosome& receiver) {
 
     int *one = new int [ell];
     for (int i=0; i<ell; ++i) {
@@ -457,6 +561,10 @@ void DSMGA2::buildGraph() {
     for (int i=0; i<ell; ++i) {
 
         for (int j=i+1; j<ell; ++j) {
+            if (doner.getVal(i) == receiver.getVal(i) || doner.getVal(j) == receiver.getVal(j)) {
+                graph.write(i, j, 0.0);
+                continue;
+            }
 
             int n00, n01, n10, n11;
             int nX =  countXOR(i, j);
@@ -595,5 +703,13 @@ void DSMGA2::tournamentSelection () {
 
 double DSMGA2::bestF () {
     return population[bestIndex].getFitness();
+}
+
+size_t DSMGA2::distance(const Chromosome& ch1, const Chromosome& ch2) const {
+    size_t d = 0;
+    for (int i = 0; i < ell; ++i)
+        d += (ch1.getVal(i) != ch2.getVal(i));
+            
+    return d;
 }
 

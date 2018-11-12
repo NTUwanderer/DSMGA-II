@@ -119,6 +119,7 @@ public:
     void setLength ();
 
     double getMaxFitness () const;
+    void printOut () const;
 
 
 public:
@@ -128,7 +129,7 @@ public:
     static bool hit;
     static unordered_map<unsigned long, double> cache;
 
-protected:
+// protected:
 
     unsigned long *gene;
     int length;
@@ -136,6 +137,7 @@ protected:
     double fitness;
     bool evaluated;
     unsigned long key;
+    bool deprecated = false;
 
 };
 

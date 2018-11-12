@@ -16,6 +16,7 @@ Chromosome::Chromosome () {
     lengthLong = 0;
     gene = NULL;
     evaluated = false;
+    deprecated = false;
 }
 
 Chromosome::Chromosome (int n_length) {
@@ -39,6 +40,7 @@ void Chromosome::init (int _length) {
     gene[lengthLong-1] = 0;
 
     evaluated = false;
+    deprecated = false;
 }
 
 void Chromosome::init0 (int _length) {
@@ -55,6 +57,7 @@ void Chromosome::init0 (int _length) {
 
     key = 0;
     evaluated = false;
+    deprecated = false;
 }
 
 void Chromosome::initR (int _length) {
@@ -77,6 +80,7 @@ void Chromosome::initR (int _length) {
     }
 
     evaluated = false;
+    deprecated = false;
 }
 
 double Chromosome::getFitness () {
@@ -311,6 +315,11 @@ double Chromosome::mkTrap (double fHigh, double fLow) const {
     return result;
 }
 
+void Chromosome::printOut () const {
+    int i;
+    for (i = 0; i < length; i++)
+        printf ("%d", getVal(i));
+}
 
 int Chromosome::getLength () const {
     return length;
