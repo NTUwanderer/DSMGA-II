@@ -362,13 +362,35 @@ void DSMGA2::restrictedMixing(Chromosome& ch) {
 
         genOrderN();
 
-        for (int i=0; i<nCurrent; ++i) {
+        vector< pair<int, int> > p(nCurrent-1);
 
-            if (EQ)
-                backMixingE(ch, mask, population[orderN[i]]);
+        for (int i = 0; i < nCurrent; ++i)
+            if (population[i] == ch) continue;
             else
-                backMixing(ch, mask, population[orderN[i]]);
+            {   int d = distance(population[i], ch);
+                p.push_back(make_pair(d, i));
+            }
+
+        sort(p.begin(), p.end());
+        
+        int i = 0;
+        bool cnt = 0;
+        for (i = 0; i < nCurrent/10; ++i)
+        {
+            if (EQ)
+                cnt += backMixingE(ch, mask, population[p[i].second]);
+            else
+                cnt += backMixing(ch, mask, population[p[i].second]);
         }
+
+        if (cnt >= (nCurrent/10)/2)
+            for (; i < p.size(); ++i)
+            {
+                if (EQ)
+                    cnt += backMixingE(ch, mask, population[p[i].second]);
+                else
+                    cnt += backMixing(ch, mask, population[p[i].second]);
+            }
     }
 
 }
@@ -506,7 +528,7 @@ bool DSMGA2::pyramid_restrictedMixing(Chromosome& ch) {
     return taken;
 }
 
-void DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
+bool DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
 
     Chromosome trial(ell);
     trial = des;
@@ -517,12 +539,13 @@ void DSMGA2::backMixing(Chromosome& source, list<int>& mask, Chromosome& des) {
         (*pHash).erase(des.getKey());
         (*pHash)[trial.getKey()] = trial.getFitness();
         des = trial;
-        return;
+        return true;
     }
-
+    
+    return false;
 }
 
-void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
+bool DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
 
     Chromosome trial(ell);
     trial = des;
@@ -535,7 +558,7 @@ void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
 
         EQ = false;
         des = trial;
-        return;
+        return true;
     }
 
     if (trial.getFitness() >= des.getFitness()) {
@@ -543,9 +566,9 @@ void DSMGA2::backMixingE(Chromosome& source, list<int>& mask, Chromosome& des) {
         (*pHash)[trial.getKey()] = trial.getFitness();
 
         des = trial;
-        return;
+        return true;
     }
-
+    return false;
 }
 
 bool DSMGA2::restrictedMixing(Chromosome& ch, list<int>& mask) {
@@ -963,6 +986,13 @@ double DSMGA2::computeMI(double a00, double a01, double a10, double a11) const {
 
     return -p-q+join;
 
+}
+
+size_t DSMGA2::distance(const Chromosome& ch1, const Chromosome& ch2) const {
+    size_t d = 0;
+    for (int i = 0; i < ell; ++i) d += (ch1.getVal(i) != ch2.getVal(i));
+            
+    return d;
 }
 
 

@@ -43,10 +43,12 @@ public:
     bool pyramid_restrictedMixing(Chromosome&);
     bool pyramid_restrictedMixing(Chromosome& ch, list<int>& mask);
 
-    void backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
-    void backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);
+    bool backMixing(Chromosome& source, list<int>& mask, Chromosome& des);
+    bool backMixingE(Chromosome& source, list<int>& mask, Chromosome& des);
     bool pyramid_BM(Chromosome& source, list<int>& mask, Chromosome& des);
     bool pyramid_BM_Equal(Chromosome& source, list<int>& mask, Chromosome& des);
+
+    size_t distance(const Chromosome& ch1, const Chromosome& ch2) const;
 
     bool shouldTerminate ();
 
