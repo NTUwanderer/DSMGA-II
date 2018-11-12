@@ -400,6 +400,24 @@ size_t DSMGA2::findSize(Chromosome& ch, list<int>& mask) const {
 
         ++size;
     }
+    
+
+    int i = 0, prevNode = *mask.begin();
+
+    double sum = 0, avg = 0;
+
+    for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it, ++i) {
+        if (it == mask.begin()) continue; 
+
+
+        sum += graph(prevNode, *it);
+
+        if (i < size) continue;
+        else if (avg > sum/(double)i){
+            break;
+        }
+        avg = sum / (double)i;
+    }
 
     return size;
 
