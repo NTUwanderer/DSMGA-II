@@ -234,6 +234,7 @@ void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner) {
     }
 
     list<int> mask = masks[r];
+    list<int> temp = mask;
 
     size_t size = findSize(ch, mask);
     if (size > (size_t)ell/2)
@@ -249,6 +250,31 @@ void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner) {
     EQ = true;
 
     if (taken) {
+        // Mask extension
+        double avg = 0;
+        int total_pair = size * (size+1)/2;
+        
+        for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it)
+        {   list<int>::iterator it2 = it;
+            for (++it2; it2 != mask.end(); ++it2) avg += graph(*it, *it2)/(double)total_pair;
+        }
+        list<int>::iterator it = temp.begin();
+        for (int i = 0; i < size; ++i, ++it);
+        
+        for (; it != temp.end(); ++it)
+        {   int n_totalpair = (size + 1) * (size + 2) / 2;
+            double n_avg = avg * (double)size / (double)(size+2);
+
+            for (list<int>::iterator it2 = mask.end(); it2 != mask.end(); ++it2) n_avg += graph(*it, *it2) / n_totalpair;
+
+            if (n_avg + 1e-6 < avg) break;
+            else 
+            {   ++size;
+                mask.push_back(*it);
+            }
+        }
+
+
         queue<int> st;
         bool* used = new bool[nCurrent];
         for (int i = 0; i < nCurrent; ++i) {
@@ -401,27 +427,7 @@ size_t DSMGA2::findSize(Chromosome& ch, list<int>& mask) const {
         ++size;
     }
     
-
-    int i = 0, prevNode = *mask.begin();
-
-    double sum = 0, avg = 0;
-
-    for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it, ++i) {
-        if (it == mask.begin()) continue; 
-
-
-        sum += graph(prevNode, *it);
-
-        if (i < size) continue;
-        else if (avg > sum/(double)i) break;
-        else ++size;
-
-        avg = sum / (double)i;
-    }
-
     return size;
-
-
 }
 
 size_t DSMGA2::findSize(Chromosome& ch, list<int>& mask, Chromosome& ch2) const {
