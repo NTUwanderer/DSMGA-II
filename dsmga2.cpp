@@ -261,7 +261,7 @@ void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner, int rec_GIdx) {
 
     list<int> mask = masks[r];
 
-    findClique(r, mask);
+    findClique(r, mask, doner, ch);
     size_t size = findSize(ch, mask);
     if (size > (size_t)ell/2)
         size = ell/2;
@@ -470,6 +470,7 @@ void DSMGA2::mixing() {
         selection();
 
     buildFastCounting();
+    buildGraph();
 
     int repeat = (ell>50)? ell/50: 1;
 
@@ -522,7 +523,7 @@ void DSMGA2::mixing() {
                 continue;
             }
             // buildFastCounting(doner, receiver);
-            buildGraph(doner, receiver);
+            // buildGraph(doner, receiver);
             // for (int i=0; i<ell; ++i) {
             //     if (receiver.getVal(i) != doner.getVal(i)) {
             //         findClique(i, masks[i], doner, receiver);
@@ -587,6 +588,85 @@ void DSMGA2::buildGraph(const Chromosome& doner, const Chromosome& receiver) {
 
 
     delete []one;
+
+}
+
+void DSMGA2::buildGraph() {
+
+    int *one = new int [ell];
+    for (int i=0; i<ell; ++i) {
+        one[i] = countOne(i);
+    }
+
+    for (int i=0; i<ell; ++i) {
+
+        for (int j=i+1; j<ell; ++j) {
+
+            int n00, n01, n10, n11;
+            int nX =  countXOR(i, j);
+
+            n11 = (one[i]+one[j]-nX)/2;
+            n10 = one[i] - n11;
+            n01 = one[j] - n11;
+            n00 = nCurrent - n01 - n10 - n11;
+
+            double p00 = (double)n00/(double)nCurrent;
+            double p01 = (double)n01/(double)nCurrent;
+            double p10 = (double)n10/(double)nCurrent;
+            double p11 = (double)n11/(double)nCurrent;
+
+            double linkage;
+            linkage = computeMI(p00,p01,p10,p11);
+            graph.write(i,j,linkage);
+        }
+    }
+
+
+    delete []one;
+
+}
+
+void DSMGA2::findClique(int startNode, list<int>& result, const Chromosome& doner, const Chromosome& receiver) {
+
+    result.clear();
+
+    DLLA rest(ell);
+    genOrderELL();
+    for (int i=0; i<ell; ++i) {
+        if (doner.getVal(orderELL[i]) == receiver.getVal(orderELL[i]))
+            continue;
+
+        if (orderELL[i]==startNode)
+            result.push_back(orderELL[i]);
+        else
+            rest.insert(orderELL[i]);
+    }
+
+    double *connection = new double[ell];
+
+    for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter)
+        connection[*iter] = graph(startNode, *iter);
+
+    while (!rest.isEmpty()) {
+
+        double max = -INF;
+        int index = -1;
+        for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter) {
+            if (max < connection[*iter]) {
+                max = connection[*iter];
+                index = *iter;
+            }
+        }
+
+        rest.erase(index);
+        result.push_back(index);
+
+        for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter)
+            connection[*iter] += graph(index, *iter);
+    }
+
+
+    delete []connection;
 
 }
 

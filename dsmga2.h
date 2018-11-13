@@ -129,6 +129,7 @@ public:
     void oneRun (bool output = true);
     int doIt (bool output = true);
 
+    void buildGraph ();
     void buildGraph (const Chromosome&, const Chromosome&);
     void mixing ();
     void restrictedMixing(Chromosome& ch, Chromosome& doner, int rec_GIdx = 0);
@@ -193,6 +194,7 @@ public:
 
 
     void findClique(int startNode, list<int>& result);
+    void findClique(int startNode, list<int>& result, const Chromosome&, const Chromosome&);
 
     void buildGroup();
     int* groupIndices;
