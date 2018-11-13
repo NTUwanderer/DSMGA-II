@@ -36,6 +36,7 @@ DSMGA2::DSMGA2 (int n_ell, int n_nInitial, int n_maxGen, int n_maxFe, int fffff)
     maxFe = n_maxFe;
 
     graph.init(ell);
+    orig_graph.init(ell);
 
     bestIndex = -1;
     masks = new list<int>[ell];
@@ -286,6 +287,23 @@ void DSMGA2::restrictedMixing(Chromosome& ch, Chromosome& doner, int rec_GIdx) {
 
     EQ = true;
     if (taken) {
+        list<int> origMask(mask);
+        expandClique(mask);
+
+        // show mask difference
+        if (false && origMask.size() != mask.size()) {
+
+            printf ("origMask:");
+            for (list<int>::iterator it = origMask.begin(); it != origMask.end(); ++it) {
+                printf (" %i", *it);
+            }
+            printf ("\n");
+            printf ("newMask :");
+            for (list<int>::iterator it = mask.begin(); it != mask.end(); ++it) {
+                printf (" %i", *it);
+            }
+            printf ("\n");
+        }
         size_t better = 0;
         genOrderN();
 
@@ -470,6 +488,7 @@ void DSMGA2::mixing() {
         selection();
 
     buildFastCounting();
+    buildGraph(); // orig_graph
 
     int repeat = (ell>50)? ell/50: 1;
 
@@ -590,6 +609,41 @@ void DSMGA2::buildGraph(const Chromosome& doner, const Chromosome& receiver) {
 
 }
 
+void DSMGA2::buildGraph() {
+
+    int *one = new int [ell];
+    for (int i=0; i<ell; ++i) {
+        one[i] = countOne(i);
+    }
+
+    for (int i=0; i<ell; ++i) {
+
+        for (int j=i+1; j<ell; ++j) {
+
+            int n00, n01, n10, n11;
+            int nX =  countXOR(i, j);
+
+            n11 = (one[i]+one[j]-nX)/2;
+            n10 = one[i] - n11;
+            n01 = one[j] - n11;
+            n00 = nCurrent - n01 - n10 - n11;
+
+            double p00 = (double)n00/(double)nCurrent;
+            double p01 = (double)n01/(double)nCurrent;
+            double p10 = (double)n10/(double)nCurrent;
+            double p11 = (double)n11/(double)nCurrent;
+
+            double linkage;
+            linkage = computeMI(p00,p01,p10,p11);
+            orig_graph.write(i,j,linkage);
+        }
+    }
+
+
+    delete []one;
+
+}
+
 // from 1 to ell, pick by max edge
 void DSMGA2::findClique(int startNode, list<int>& result) {
 
@@ -626,6 +680,70 @@ void DSMGA2::findClique(int startNode, list<int>& result) {
 
         for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter)
             connection[*iter] += graph(index, *iter);
+    }
+
+
+    delete []connection;
+
+}
+
+void DSMGA2::expandClique(list<int>& result) {
+
+    if (result.empty())
+        return;
+
+    DLLA rest(ell);
+    genOrderELL();
+    int startNode = *(result.begin());
+    for (int i=0; i<ell; ++i) {
+        if (orderELL[i]!=startNode)
+            rest.insert(orderELL[i]);
+    }
+
+    double *connection = new double[ell];
+
+    for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter)
+        connection[*iter] = orig_graph(startNode, *iter);
+
+    list<int>::iterator it = result.begin();
+    ++it;
+    double sum = 0.0;
+    double avgLink = 1.0;
+    for (; it != result.end(); ++it) {
+        int index = *it;
+        sum += connection[index];
+        rest.erase(index);
+        
+        for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter)
+            connection[*iter] += orig_graph(index, *iter);
+    }
+
+    if (result.size() > 1) {
+        avgLink = sum / (result.size() * (result.size()+1) / 2);
+    }
+
+    while (!rest.isEmpty()) {
+
+        double maxL = -INF;
+        int index = -1;
+        for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter) {
+            if (maxL < connection[*iter]) {
+                maxL = connection[*iter];
+                index = *iter;
+            }
+        }
+        double newAvgLink = (sum + maxL) / ((result.size()+1) * (result.size()+2) / 2);
+        if (newAvgLink + 1e-8 < avgLink)
+            break;
+
+        avgLink = newAvgLink;
+        sum += maxL;
+
+        rest.erase(index);
+        result.push_back(index);
+
+        for (DLLA::iterator iter = rest.begin(); iter != rest.end(); ++iter)
+            connection[*iter] += orig_graph(index, *iter);
     }
 
 

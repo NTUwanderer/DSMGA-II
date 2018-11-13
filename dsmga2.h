@@ -100,7 +100,8 @@ public:
         return d;
     }
     Chromosome getInstance () const {
-        Chromosome ch(ell);
+        Chromosome ch;
+        ch.init(ell);
 
         for (int i = 0; i < ell; ++i) {
             if (ellCount[i] > num/2)
@@ -129,6 +130,7 @@ public:
     void oneRun (bool output = true);
     int doIt (bool output = true);
 
+    void buildGraph ();
     void buildGraph (const Chromosome&, const Chromosome&);
     void mixing ();
     void restrictedMixing(Chromosome& ch, Chromosome& doner, int rec_GIdx = 0);
@@ -184,6 +186,7 @@ public:
     FastCounting* fastCounting;
 
     TriMatrix<double> graph;
+    TriMatrix<double> orig_graph;
 
     double previousFitnessMean;
     Statistics stFitness;
@@ -193,6 +196,7 @@ public:
 
 
     void findClique(int startNode, list<int>& result);
+    void expandClique(list<int>& result);
 
     void buildGroup();
     int* groupIndices;
